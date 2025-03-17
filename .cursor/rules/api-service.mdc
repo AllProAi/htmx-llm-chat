@@ -1,9 +1,4 @@
 ---
-description: API service guidelines for OpenAI integration
-globs: app/lib/api.js, app/lib/response-api.js
-alwaysApply: false
----
- ---
 description: "API service guidelines for OpenAI integration"
 globs: ["app/lib/api.js", "app/lib/response-api.js"]
 alwaysApply: true
@@ -127,4 +122,4 @@ class ResponseAPI {
 - Implement caching where appropriate
 - Use streaming for large responses
 - Monitor token usage
-- Batch requests when possible
+- Batch requests when possible 

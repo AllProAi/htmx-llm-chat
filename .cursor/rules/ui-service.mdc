@@ -1,9 +1,4 @@
 ---
-description: UI service guidelines for chat interface components
-globs: "app/lib/ui.js", "app/components/**/*", "app/styles/**/*"
-alwaysApply: false
----
- ---
 description: "UI service guidelines for chat interface components"
 globs: ["app/lib/ui.js", "app/components/**/*", "app/styles/**/*"]
 alwaysApply: true
@@ -168,4 +163,4 @@ class ChatUI {
 - Mobile device testing
 - Accessibility testing (screen readers)
 - Responsive design testing
-- Performance testing for animations
+- Performance testing for animations 

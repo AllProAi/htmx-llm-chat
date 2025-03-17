@@ -1,9 +1,4 @@
 ---
-description: Animation service guidelines using Framer Motion
-globs: app/lib/animations.js
-alwaysApply: false
----
- ---
 description: "Animation service guidelines using Framer Motion"
 globs: ["app/lib/animations.js"]
 alwaysApply: true
