@@ -1,9 +1,4 @@
 ---
-description: Shared standards and guidelines across all services
-globs: app/**/*
-alwaysApply: false
----
- ---
 description: "Shared standards and guidelines across all services"
 globs: ["app/**/*"]
 alwaysApply: true
@@ -96,4 +91,4 @@ function exampleFunction(paramName) {
 - Document all public APIs and interfaces
 - Include usage examples
 - Maintain change logs
-- Document implementation decisions
+- Document implementation decisions 

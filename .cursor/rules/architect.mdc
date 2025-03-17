@@ -1,49 +1,65 @@
 ---
-description: System-wide architecture guidelines for Framer Motion LLM Chat App
-globs: **/*
-alwaysApply: false
----
----
-description: 
-globs: 
-alwaysApply: true
----
----
-description: "System-wide architecture guidelines for Framer Motion LLM Chat App"
+description: "System-wide architecture guidelines for HTMX LLM Chat App"
 globs: ["**/*"]
 alwaysApply: true
 ---
 
-# Framer Motion LLM Chat App Architecture
+# HTMX LLM Chat App Architecture
 
 ## Project Overview
-A simple chat application that integrates with OpenAI's API and uses Framer Motion for animated UI elements. The app will feature a clean, HTML-based interface with HTMX for interactivity and smooth animations provided by Framer Motion.
+A lightweight, client-side chat application for interacting with OpenAI's language models, featuring smooth animations powered by Framer Motion and dynamic content loading with HTMX. The app provides a clean interface with no backend requirements, leveraging user-provided API keys for OpenAI integration.
 
 ## Tech Stack
 - HTML5 for structure
 - CSS3 for styling
 - JavaScript (Vanilla) for client-side logic
-- HTMX for dynamic content loading without full page refreshes
+- HTMX for dynamic content loading without page refreshes
 - Framer Motion (via CDN) for animations
 - OpenAI API for LLM integration
+- LocalStorage for client-side persistence
 
 ## Project Structure
 ```
 /
+├── .cursor/          # Cursor IDE configuration
+│   └── rules/        # Architecture and service rules
 ├── app/
 │   ├── components/   # Reusable HTML components
 │   ├── styles/       # CSS files
 │   ├── lib/          # JavaScript utilities
 │   └── public/       # Static assets
+├── docs/             # Documentation
+│   ├── technical_specs/  # Technical specifications
+│   └── ui_design/    # UI component designs
 ├── index.html        # Main entry point
 └── README.md         # Project documentation
 ```
+
+## Architecture Principles
+- **Client-Side Only**: No server-side components or build steps
+- **Progressive Enhancement**: Core functionality works without JS, enhanced with HTMX/Motion
+- **Modular Design**: Clearly separated concerns and responsibilities
+- **Accessibility First**: WCAG 2.1 AA compliance throughout
+- **Responsive Design**: Mobile-first approach that adapts to all screen sizes
+- **Privacy Focused**: No server-side storage, all data stays in the browser
+
+## Service Boundaries
+- **API Service**: Handles all communication with external APIs
+- **UI Service**: Manages rendering, user interaction, and DOM manipulation
+- **Animation Service**: Controls motion, transitions, and visual effects
+- **State Management**: Handles persistence, history, and application state
+
+## API Integration Strategy
+- Direct client-side integration with OpenAI API
+- Migration path from Chat Completions API to Responses API
+- Feature flags for gradual rollout of new capabilities
+- Graceful fallbacks for unsupported browsers or failed API calls
 
 ## Responsibilities
 - User interface with clean, responsive design
 - Chat functionality with OpenAI API integration
 - Smooth animations using Framer Motion
-- State management in the browser
+- State management in the browser localStorage
 - No authentication required (API key will be entered by user)
 
 ## Dependencies
@@ -51,9 +67,18 @@ A simple chat application that integrates with OpenAI's API and uses Framer Moti
 - OpenAI API (client-side integration)
 - HTMX for AJAX interactions
 - Framer Motion loaded via CDN
+- Marked.js for Markdown parsing
 
-## Interfaces
+## Public Interfaces
 - Chat input field
 - Message display area with user/AI distinction
-- Settings panel for API key
-- Typing indicators using Framer Motion animations 
+- Settings panel for API key and preferences
+- Typing indicators using Framer Motion animations
+- Web search results display (new with Responses API)
+
+## Development Guidelines
+- Follow modular approach with clean separation of concerns
+- Maintain backward compatibility when adding new features
+- Thoroughly document all public interfaces and API methods
+- Implement feature flags for gradual rollout of new capabilities
+- Test across all supported browsers before deployment 
