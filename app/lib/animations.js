@@ -322,4 +322,7 @@ class Animations {
 }
 
 // Create and export a singleton instance
-const animations = new Animations(); 
+const animations = new Animations();
+
+// Expose the instance globally for other modules
+window.animations = animations; 

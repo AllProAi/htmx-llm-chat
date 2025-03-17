@@ -1327,6 +1327,1036 @@ ok we had da crash on the IDE please continue all rules are inplace
 
 _**Assistant**_
 
+<think>Based on the attached files and the user's message, it seems all the rule files are now in place. The user had a crash in the IDE but all the necessary rules have been created successfully:
+
+1. architect.mdc - System-wide architecture guidelines
+2. service-common.mdc - Shared standards across services
+3. api-service.mdc - API integration guidelines
+4. ui-service.mdc - UI components guidelines
+5. animation-service.mdc - Animation guidelines
+6. interfaces.mdc - Cross-service communication
+
+Now that the rules are in place, I should:
+1. Create a file for state management specifically
+2. Create a file for web search service
+3. Commit these changes
+4. Continue with development recommendations</think>Great! I can see that all the rule files are successfully in place. Let me create the remaining two rule files we need, then commit our changes and provide recommendations for continuing development.
+
+First, let's create a rule file for state management:
+
+---
+
+_**Assistant**_
+
+```
+---
+description: "State management guidelines for client-side application data"
+globs: ["app/lib/main.js", "app/lib/api.js"]
+alwaysApply: true
+---
+
+# State Management
+
+## Responsibilities
+- Managing application state and data persistence
+- Conversation history tracking and retrieval
+- User preferences storage and application
+- Feature flag management
+- API key secure storage
+- Cross-component state synchronization
+
+## Dependencies
+- Browser localStorage API
+- EventTarget for state change notifications
+- JSON for serialization
+
+## Application State Structure
+
+```javascript
+// Primary state structure
+const AppState = {
+  // User preferences
+  settings: {
+    theme: 'light' | 'dark' | 'system',
+    model: String,
+    features: {
+      webSearch: Boolean,
+      responsesAPI: Boolean,
+      // Other feature flags
+    }
+  },
+  
+  // API configuration
+  api: {
+    keys: {
+      openai: String,     // Encrypted or masked for security
+      anthropic: String   // Encrypted or masked for security
+    },
+    model: String,        // Currently selected model
+    temperature: Number,  // Model temperature setting
+  },
+  
+  // Conversation management
+  conversations: {
+    [id: String]: {
+      id: String,
+      title: String,
+      messages: Array<Message>,
+      createdAt: String,
+      updatedAt: String,
+      responseIds: {
+        latest: String    // Latest response ID for continuation
+      }
+    }
+  },
+  
+  // UI state
+  ui: {
+    currentConversationId: String,
+    settingsPanelOpen: Boolean,
+    sidebarOpen: Boolean,
+    loading: Boolean
+  }
+};
+```
+
+## Storage Strategy
+
+### localStorage Items
+- `openai_api_key`: User's OpenAI API key
+- `anthropic_api_key`: User's Anthropic API key
+- `conversations`: All conversation data
+- `current_conversation_id`: Currently selected conversation
+- `theme`: User's theme preference
+- `selected_model`: Currently selected model
+- `feature_responses_api`: Feature flag for Responses API
+- `feature_web_search`: Feature flag for web search
+
+### Storage Guidelines
+- Use version prefixes for data structure changes
+- Implement migration paths for schema updates
+- Don't store excessive data (limit conversation history)
+- Clear sensitive data when no longer needed
+- Handle storage quota limitations gracefully
+
+```javascript
+// Example: Versioned storage
+function saveConversations(conversations) {
+  try {
+    localStorage.setItem('conversations_v2', JSON.stringify(conversations));
+  } catch (error) {
+    // Handle quota exceeded or other storage errors
+    console.error('Failed to save conversations:', error);
+    // Notify user or implement fallback
+  }
+}
+```
+
+## State Access Patterns
+
+### Direct Access
+- Used for simple, infrequent state reads
+- Always with defensive coding (null checks, defaults)
+
+```javascript
+const theme = localStorage.getItem('theme') || 'system';
+```
+
+### Event-based Notification
+- For changes that affect multiple components
+- Reduces polling and improves performance
+
+```javascript
+// Broadcasting state change
+document.dispatchEvent(new CustomEvent('theme:changed', {
+  detail: { theme: newTheme }
+}));
+
+// Listening for state change
+document.addEventListener('theme:changed', (event) => {
+  applyTheme(event.detail.theme);
+});
+```
+
+### Caching Strategy
+- Cache frequently accessed data in memory
+- Maintain coherence between memory and localStorage
+- Clear cache on page reload or explicit reset
+
+## Security Considerations
+
+### API Key Storage
+- Do not store keys in plaintext (consider encryption if possible)
+- Provide clear UI indicator when keys are stored
+- Clear keys on user request
+- Warn about localStorage security limitations
+
+### Data Validation
+- Validate all data retrieved from storage
+- Handle corrupted data gracefully
+- Provide recovery mechanisms for critical data
+
+## State Initialization
+
+```javascript
+function initializeAppState() {
+  // Set defaults
+  const defaultState = {
+    theme: 'system',
+    currentConversationId: null,
+    // Other defaults
+  };
+  
+  // Load from storage with defaults
+  const theme = localStorage.getItem('theme') || defaultState.theme;
+  
+  // Initialize conversation if none exists
+  const conversations = loadConversations();
+  if (Object.keys(conversations).length === 0) {
+    createNewConversation('New Chat');
+  }
+  
+  // Set current conversation
+  const currentId = localStorage.getItem('current_conversation_id');
+  if (currentId && conversations[currentId]) {
+    setCurrentConversation(currentId);
+  } else if (Object.keys(conversations).length > 0) {
+    setCurrentConversation(Object.keys(conversations)[0]);
+  }
+}
+```
+
+## Data Cleanup
+
+- Implement conversation pruning for large histories
+- Add conversation export before deletion
+- Clear sensitive data completely (not just references)
+- Provide "reset all" functionality for user privacy
+
+## Feature Flag Management
+
+- Centralized feature flag definition
+- Consistent checking pattern across codebase
+- Clear UI indicators for experimental features
+- Analytics for feature usage (if implemented)
+
+```javascript
+// Feature flag definition
+const FEATURES = {
+  RESPONSES_API: localStorage.getItem('feature_responses_api') === 'true',
+  WEB_SEARCH: localStorage.getItem('feature_web_search') === 'true'
+};
+
+// Feature flag usage
+if (FEATURES.WEB_SEARCH && webSearchEnabled) {
+  // Implement web search functionality
+}
+```
+
+## Testing Strategy
+- Unit tests for state management functions
+- Tests for migration paths between versions
+- Storage quota testing
+- Corrupted data recovery testing
+```
+
+---
+
+_**Assistant**_
+
+Let me try again to create the state-management file:
+
+---
+
+_**Assistant**_
+
+```
+mkdir -p .cursor/rules
+```
+
+---
+
+_**Assistant**_
+
+Good, the directory already exists. Let's create the state-management.mdc file:
+
+---
+
+_**Assistant**_
+
+```
+undefined
+```
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+_**User**_
+
+ALL RULES ARE COMPLETE please proceede
+
+---
+
+_**Assistant**_
+
+<think>All the cursor rules files are now in place:
+1. architect.mdc - System-wide architecture guidelines
+2. service-common.mdc - Shared standards across services
+3. api-service.mdc - API service guidelines
+4. ui-service.mdc - UI service guidelines
+5. animation-service.mdc - Animation service guidelines
+6. interfaces.mdc - Interface guidelines for cross-service communication
+7. state-management.mdc - State management guidelines
+
+Now I should commit these changes to the feature branch we created and provide recommendations for continuing development based on the implementation checklist.</think>Great! All the rule files are now in place. Let's commit these changes to our feature branch and then continue with recommendations for development.
+
+---
+
+_**Assistant**_
+
+```
+git add .cursor/rules/*.mdc
+```
+
+---
+
+_**Assistant**_
+
+```
+git commit -m "Add comprehensive rule files for architectural guidance"
+```
+
+---
+
+_**Assistant**_
+
+Now that we have committed our comprehensive rule system, let's continue with implementing the next steps of development. Based on the implementation checklist and the files we've examined, the priority should be completing the ResponsesAPI integration.
+
+## Development Continuation Plan
+
+### 1. Complete the ResponsesAPI Class Implementation
+
+The existing `response-api.js` file has a basic structure, but needs enhancements to fully support the OpenAI Responses API capabilities:
+
+---
+
+_**Assistant**_
+
+```
+/**
+ * Motion LLM Chat - ResponseAPI Integration
+ * Handles communication with OpenAI's Responses API
+ */
+
+class ResponseAPI {
+    constructor() {
+        this.responsesEndpoint = 'https://api.openai.com/v1/responses';
+        this.controller = null; // AbortController for cancelling requests
+        this.currentResponseId = null; // Current response ID for stateful conversations
+        this.previousResponseIds = {}; // Map of conversation IDs to their latest response IDs
+    }
+
+    /**
+     * Get the previous response ID for the current conversation
+     * @param {string} conversationId - The conversation ID
+     * @returns {string|null} - The previous response ID or null
+     */
+    getPreviousResponseId(conversationId) {
+        return this.previousResponseIds[conversationId] || null;
+    }
+
+    /**
+     * Save the response ID for a conversation
+     * @param {string} conversationId - The conversation ID
+     * @param {string} responseId - The response ID to save
+     */
+    saveResponseId(conversationId, responseId) {
+        this.previousResponseIds[conversationId] = responseId;
+        // Also save to localStorage for persistence across sessions
+        try {
+            const savedIds = JSON.parse(localStorage.getItem('response_ids') || '{}');
+            savedIds[conversationId] = responseId;
+            localStorage.setItem('response_ids', JSON.stringify(savedIds));
+        } catch (error) {
+            console.error('Failed to save response ID:', error);
+        }
+    }
+
+    /**
+     * Load saved response IDs from localStorage
+     */
+    loadSavedResponseIds() {
+        try {
+            const savedIds = JSON.parse(localStorage.getItem('response_ids') || '{}');
+            this.previousResponseIds = savedIds;
+        } catch (error) {
+            console.error('Failed to load response IDs:', error);
+            this.previousResponseIds = {};
+        }
+    }
+
+    /**
+     * Create a new response using the Responses API
+     * @param {string} message - The message to send
+     * @param {string} model - The model to use
+     * @param {Object} options - Additional options
+     * @returns {Promise<Object>} - The API response
+     */
+    async create(message, model, options = {}) {
+        const body = {
+            model: model,
+            input: message,
+            temperature: options.temperature || 0.7
+        };
+
+        // Add tools if specified
+        if (options.useWebSearch) {
+            body.tools = [{ type: "web_search" }];
+        }
+
+        // Add max tokens if specified
+        if (options.maxCompletionTokens) {
+            body.max_completion_tokens = options.maxCompletionTokens;
+        }
+
+        // Send the request
+        const response = await fetch(this.responsesEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.getApiKey()}`
+            },
+            body: JSON.stringify(body),
+            signal: options.signal
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error?.message || `API request failed with status ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    /**
+     * Retrieve an existing response by ID
+     * @param {string} responseId - The response ID to retrieve
+     * @returns {Promise<Object>} - The API response
+     */
+    async retrieve(responseId) {
+        const response = await fetch(`${this.responsesEndpoint}/${responseId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${this.getApiKey()}`
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error?.message || `API request failed with status ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    /**
+     * Continue a conversation using a previous response ID
+     * @param {string} responseId - The previous response ID
+     * @param {string} message - The new message
+     * @param {Object} options - Additional options
+     * @returns {Promise<Object>} - The API response
+     */
+    async continueConversation(responseId, message, options = {}) {
+        const body = {
+            model: options.model || 'gpt-4o',
+            input: message,
+            previous_response_id: responseId,
+            temperature: options.temperature || 0.7
+        };
+
+        // Add tools if specified
+        if (options.useWebSearch) {
+            body.tools = [{ type: "web_search" }];
+        }
+
+        // Send the request
+        const response = await fetch(this.responsesEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.getApiKey()}`
+            },
+            body: JSON.stringify(body),
+            signal: options.signal
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error?.message || `API request failed with status ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    /**
+     * Send a message using the Responses API
+     * @param {string} message - The message to send
+     * @param {string} model - The model to use
+     * @param {Array} history - The conversation history
+     * @param {string} conversationId - The current conversation ID
+     * @param {Function} onProgress - Callback for streaming progress
+     * @param {Function} onComplete - Callback when the response is complete
+     * @param {Function} onError - Callback for errors
+     * @param {boolean} useWebSearch - Whether to use web search capability
+     */
+    async sendMessage(message, model, history, conversationId, onProgress, onComplete, onError, useWebSearch = false) {
+        try {
+            // Create a new AbortController for this request
+            this.controller = new AbortController();
+            const signal = this.controller.signal;
+
+            let responseData;
+            const previousResponseId = this.getPreviousResponseId(conversationId);
+
+            // If we have a previous response ID, continue the conversation
+            if (previousResponseId) {
+                responseData = await this.continueConversation(previousResponseId, message, {
+                    model,
+                    useWebSearch,
+                    signal
+                });
+            } else {
+                // Otherwise, create a new conversation
+                responseData = await this.create(message, model, {
+                    useWebSearch,
+                    signal
+                });
+            }
+            
+            // Save the response ID for future continuations
+            if (responseData.id) {
+                this.saveResponseId(conversationId, responseData.id);
+            }
+
+            // Extract the text content from the response
+            let responseText = this.extractTextFromResponse(responseData);
+            
+            // Check for citations/annotations and format them
+            const formattedResponse = this.formatResponseWithCitations(responseData);
+            
+            // Call the onComplete callback with the response
+            onComplete(formattedResponse, responseData);
+            
+        } catch (error) {
+            // Don't report errors from aborted requests
+            if (error.name === 'AbortError') return;
+            
+            console.error('Responses API Request failed:', error);
+            onError(error.message || 'An error occurred while communicating with the Responses API.');
+        } finally {
+            this.controller = null;
+        }
+    }
+
+    /**
+     * Cancel the current request
+     */
+    cancelRequest() {
+        if (this.controller) {
+            this.controller.abort();
+            this.controller = null;
+        }
+    }
+
+    /**
+     * Extract text from a Responses API response
+     * @param {Object} responseData - The response data from the API
+     * @returns {string} - The extracted text
+     */
+    extractTextFromResponse(responseData) {
+        let text = '';
+        
+        if (responseData.output && Array.isArray(responseData.output)) {
+            for (const item of responseData.output) {
+                if (item.type === 'message' && item.content) {
+                    for (const content of item.content) {
+                        if (content.type === 'output_text' && content.text) {
+                            text += content.text;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return text;
+    }
+
+    /**
+     * Format a response with citations from web search
+     * @param {Object} responseData - The response data from the API
+     * @returns {Object} - The formatted response with citations
+     */
+    formatResponseWithCitations(responseData) {
+        let formattedResponse = {
+            text: '',
+            citations: [],
+            webSearchResults: []
+        };
+        
+        if (responseData.output && Array.isArray(responseData.output)) {
+            // First, check for web search results
+            const webSearchCalls = responseData.output.filter(item => item.type === 'web_search_call');
+            if (webSearchCalls.length > 0) {
+                formattedResponse.hasWebSearch = true;
+            }
+            
+            for (const item of responseData.output) {
+                // Extract web search results if available
+                if (item.type === 'web_search_call' && item.web_search) {
+                    const searchResults = item.web_search?.results || [];
+                    formattedResponse.webSearchResults = searchResults.map(result => ({
+                        title: result.title || '',
+                        url: result.url || '',
+                        snippet: result.snippet || ''
+                    }));
+                }
+                
+                // Extract message content
+                if (item.type === 'message' && item.content) {
+                    for (const content of item.content) {
+                        if (content.type === 'output_text') {
+                            formattedResponse.text += content.text || '';
+                            
+                            // Extract citations if they exist
+                            if (content.annotations && Array.isArray(content.annotations)) {
+                                for (const annotation of content.annotations) {
+                                    if (annotation.type === 'url_citation') {
+                                        formattedResponse.citations.push({
+                                            title: annotation.title || '',
+                                            url: annotation.url || '',
+                                            text: content.text.substring(
+                                                annotation.start_index || 0,
+                                                annotation.end_index || content.text.length
+                                            )
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return formattedResponse;
+    }
+
+    /**
+     * Get the API key from localStorage
+     * @returns {string} The API key
+     */
+    getApiKey() {
+        return localStorage.getItem('openai_api_key') || '';
+    }
+
+    /**
+     * Initialize the ResponseAPI
+     */
+    init() {
+        this.loadSavedResponseIds();
+    }
+}
+
+// Initialize and export the ResponseAPI class
+window.ResponseAPI = ResponseAPI;
+```
+
+---
+
+_**Assistant**_
+
+Now, let's create a component for displaying web search results from the Responses API:
+
+---
+
+_**Assistant**_
+
+```
+/**
+ * Web Search Results Component
+ * Displays search results from the OpenAI Responses API's web search tool
+ */
+
+class WebSearchResults {
+    /**
+     * Create the web search results component
+     * @param {Array} results - The web search results
+     * @returns {HTMLElement} - The web search results element
+     */
+    static create(results) {
+        if (!results || results.length === 0) return null;
+
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'web-search-results';
+        
+        // Create header
+        const header = document.createElement('div');
+        header.className = 'web-search-header';
+        
+        const icon = document.createElement('div');
+        icon.className = 'web-search-icon';
+        icon.textContent = '🔍';
+        
+        const title = document.createElement('h3');
+        title.textContent = 'Web Search Results';
+        
+        const toggleButton = document.createElement('button');
+        toggleButton.className = 'toggle-results-btn';
+        toggleButton.setAttribute('aria-label', 'Toggle search results');
+        toggleButton.textContent = '↑';
+        
+        header.appendChild(icon);
+        header.appendChild(title);
+        header.appendChild(toggleButton);
+        
+        // Create results container
+        const resultsContainer = document.createElement('div');
+        resultsContainer.className = 'search-results-container';
+        
+        // Add results
+        results.forEach(result => {
+            const resultElement = this.createResultItem(result);
+            resultsContainer.appendChild(resultElement);
+        });
+        
+        // Add elements to container
+        container.appendChild(header);
+        container.appendChild(resultsContainer);
+        
+        // Add toggle functionality
+        toggleButton.addEventListener('click', () => {
+            const isCollapsed = container.classList.contains('collapsed');
+            container.classList.toggle('collapsed');
+            toggleButton.textContent = isCollapsed ? '↑' : '↓';
+            toggleButton.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
+        });
+        
+        return container;
+    }
+    
+    /**
+     * Create a single search result item
+     * @param {Object} result - The search result data
+     * @returns {HTMLElement} - The result item element
+     */
+    static createResultItem(result) {
+        const resultElement = document.createElement('div');
+        resultElement.className = 'search-result';
+        
+        const title = document.createElement('h4');
+        const titleLink = document.createElement('a');
+        titleLink.href = result.url;
+        titleLink.textContent = result.title;
+        titleLink.target = '_blank';
+        titleLink.rel = 'noopener noreferrer';
+        title.appendChild(titleLink);
+        
+        const meta = document.createElement('div');
+        meta.className = 'result-meta';
+        
+        // Extract domain from URL
+        let domain = '';
+        try {
+            domain = new URL(result.url).hostname;
+        } catch (e) {
+            domain = result.url;
+        }
+        
+        meta.textContent = domain;
+        
+        const snippet = document.createElement('p');
+        snippet.className = 'result-snippet';
+        snippet.textContent = result.snippet;
+        
+        resultElement.appendChild(title);
+        resultElement.appendChild(meta);
+        resultElement.appendChild(snippet);
+        
+        return resultElement;
+    }
+    
+    /**
+     * Format citations for display in the AI response
+     * @param {Array} citations - Citation data
+     * @returns {string} - HTML string with formatted citations
+     */
+    static formatCitations(citations) {
+        if (!citations || citations.length === 0) return '';
+        
+        let html = '<div class="sources"><h4>Sources:</h4><ol>';
+        
+        citations.forEach((citation, index) => {
+            html += `<li><a href="${citation.url}" target="_blank" rel="noopener noreferrer">${citation.title || citation.url}</a></li>`;
+        });
+        
+        html += '</ol></div>';
+        return html;
+    }
+    
+    /**
+     * Apply citation superscripts to text
+     * @param {string} text - Original text content
+     * @param {Array} citations - Citation data
+     * @returns {string} - Text with citation superscripts added
+     */
+    static applyCitationReferences(text, citations) {
+        if (!citations || citations.length === 0) return text;
+        
+        let result = text;
+        const citationMap = {};
+        
+        citations.forEach((citation, index) => {
+            const num = index + 1;
+            citationMap[citation.url] = num;
+        });
+        
+        citations.forEach((citation, index) => {
+            const num = index + 1;
+            const citationText = citation.text;
+            
+            if (citationText && result.includes(citationText)) {
+                const superscript = `<sup data-citation="${num}">[${num}]</sup>`;
+                result = result.replace(
+                    new RegExp(`${escapeRegExp(citationText)}(?!<\/sup>)$`), 
+                    `${citationText}${superscript}`
+                );
+            }
+        });
+        
+        return result;
+    }
+}
+
+// Helper function to escape special characters in regex
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Expose the component globally
+window.WebSearchResults = WebSearchResults;
+```
+
+---
+
+_**Assistant**_
+
+Now let's add the CSS styles for the web search results component:
+
+---
+
+_**Assistant**_
+
+```
+/**
+ * Web Search Results Component Styles
+ */
+
+/* Container */
+.web-search-results {
+  background-color: var(--background-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  margin: var(--spacing-md) 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.web-search-results.collapsed .search-results-container {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Header */
+.web-search-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background-color: var(--primary-color-light);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.web-search-icon {
+  margin-right: var(--spacing-sm);
+  font-size: 1.2rem;
+}
+
+.web-search-header h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.toggle-results-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.toggle-results-btn:hover {
+  background-color: var(--background-hover);
+}
+
+/* Results Container */
+.search-results-container {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  opacity: 1;
+}
+
+/* Individual Result */
+.search-result {
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.search-result:last-child {
+  border-bottom: none;
+}
+
+.search-result h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.search-result h4 a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.search-result h4 a:hover {
+  text-decoration: underline;
+}
+
+.result-meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.result-snippet {
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
+  color: var(--text-color);
+}
+
+/* Citations */
+.sources {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-sm);
+  border-top: 1px solid var(--border-color-light);
+  font-size: 0.9rem;
+}
+
+.sources h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.sources ol {
+  margin: 0;
+  padding-left: var(--spacing-md);
+}
+
+.sources li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.sources a {
+  color: var(--primary-color);
+  text-decoration: none;
+  overflow-wrap: break-word;
+  word-break: break-all;
+}
+
+.sources a:hover {
+  text-decoration: underline;
+}
+
+/* Citation References */
+sup[data-citation] {
+  color: var(--primary-color);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .search-results-container {
+    max-height: 250px;
+  }
+  
+  .search-result h4 {
+    font-size: 0.9rem;
+  }
+  
+  .result-snippet {
+    font-size: 0.85rem;
+  }
+}
+```
+
+---
+
+_**Assistant**_
+
+Now, let's create a feature flag module to manage our feature flags consistently:
+
+---
+
+_**Assistant**_
+
+```
+undefined
+```
+
+---
+
+_**Assistant**_
+
+
+
+---
+
+_**User**_
+
+continue 
+
+---
+
+_**Assistant**_
+
 
 
 ---

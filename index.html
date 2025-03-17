@@ -65,11 +65,19 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/motion@10/dist/motion.min.js" onerror="console.warn('Motion library failed to load. Using CSS fallbacks for animations.')"></script>
     
-    <!-- Favicon -->
-    <link rel="icon" href="app/public/favicon.ico" type="image/x-icon">
+    <!-- Favicon as data URL -->
+    <link rel="icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK1iGQCtYhkBrWIZMq1iGXatYhnQrWIZ+a1iGfmtYhnQrWIZdq1iGTKtYhkBrWIZAAAAAAAAAAAAAAAAAK1iGQCtYhkUrWIZla1iGfStYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn0rWIZla1iGRStYhkAAAAAAK1iGQCtYhkTrWIZyK1iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhnIrWIZE61iGQCtYhkBrWIZlK1iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGZStYhkBrWIZMq1iGfOtYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhnzrWIZMq1iGXatYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGXatYhnQrWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhnQrWIZ+a1iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ+a1iGfmtYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGfmtYhnQrWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhnQrWIZdq1iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZdq1iGTKtYhnzrWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ861iGTKtYhkBrWIZlK1iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGZStYhkBrWIZAK1iGROtYhnIrWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGf+tYhn/rWIZ/61iGcitYhkTrWIZAAAAAACsYhgArGIYE6xiGJSsYhj0rGIY/6xiGP+sYhj/rGIY/6xiGP+sYhj/rGIY9KxiGJSsYhgTrGIYAAAAAAAAAAAAAAAAAKxiGACsYhgBrGIYMqxiGHasYhjQrGIY+axiGPmsYhjQrGIYdqxiGDKsYhgBrGIYAAAAAAAAAAAA" type="image/x-icon">
     
     <!-- Preload critical assets -->
     <link rel="preload" href="app/styles/main.css" as="style">
+    
+    <!-- Application scripts - load in correct dependency order -->
+    <script src="app/lib/feature-flags.js"></script>
+    <script src="app/lib/animations.js"></script>
+    <script src="app/lib/response-api.js"></script>
+    <script src="app/lib/api.js"></script>
+    <script src="app/lib/ui.js"></script>
+    <script src="app/lib/main.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -361,12 +369,5 @@
             </div>
         </div>
     </div>
-    
-    <!-- Scripts -->
-    <script src="app/lib/response-api.js"></script>
-    <script src="app/lib/api.js"></script>
-    <script src="app/lib/ui.js"></script>
-    <script src="app/lib/animations.js"></script>
-    <script src="app/lib/main.js"></script>
 </body>
 </html> 

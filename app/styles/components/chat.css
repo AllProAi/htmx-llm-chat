@@ -132,6 +132,8 @@
   animation: fadeInScale 0.4s ease-out;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: var(--spacing-sm);
+  position: relative;
 }
 
 .message:hover {
@@ -281,6 +283,7 @@
   background-color: var(--user-message-bg);
   border-bottom-right-radius: 0;
   transform-origin: bottom right;
+  color: var(--text-primary);
 }
 
 .user-message .message-sender {
@@ -292,6 +295,7 @@
   background-color: var(--ai-message-bg);
   border-bottom-left-radius: 0;
   transform-origin: bottom left;
+  color: var(--text-primary);
 }
 
 .ai-message .message-sender {
@@ -301,7 +305,8 @@
 /* Typing indicator */
 .typing-indicator {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   gap: var(--spacing-xs);
   padding: var(--spacing-md);
   background-color: var(--ai-message-bg);
@@ -309,16 +314,48 @@
   border-bottom-left-radius: 0;
   align-self: flex-start;
   margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
   animation: fadeIn 0.3s ease-out;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  max-width: 80%; /* Ensure the typing indicator doesn't stretch too wide */
+  position: relative; /* Position relative for absolute positioning of dots */
+  min-width: 60px;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  background-color: var(--secondary);
+  padding: 4px 8px;
+  border-radius: 12px;
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 2;
+  transition: opacity 0.3s ease-out;
 }
 
 .typing-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--secondary);
+  width: 5px;
+  height: 5px;
+  background-color: white;
   border-radius: 50%;
-  opacity: 0.6;
+  opacity: 0.9;
+}
+
+.typing-content {
+  margin-top: 0;
+  min-height: 20px;
+  width: 100%;
+  word-break: break-word;
+  white-space: pre-wrap;
+  color: inherit;
+  padding-bottom: 24px;
+  padding-right: 24px;
+  line-height: 1.5;
+  font-family: inherit;
 }
 
 /* Load more messages indicator */

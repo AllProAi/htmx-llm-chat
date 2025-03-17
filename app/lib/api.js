@@ -21,6 +21,31 @@ class ChatAPI {
         
         // Initialize ResponseAPI if available
         this.responseAPI = typeof ResponseAPI !== 'undefined' ? new ResponseAPI() : null;
+        
+        // Migrate legacy feature flag settings to new system
+        this.migrateLegacyFeatureFlags();
+    }
+    
+    /**
+     * Migrate legacy localStorage feature flags to the new FeatureFlags system
+     * This ensures backward compatibility with existing data
+     */
+    migrateLegacyFeatureFlags() {
+        // Migrate Responses API setting
+        const legacyResponsesAPI = localStorage.getItem('use_responses_api');
+        if (legacyResponsesAPI !== null) {
+            FeatureFlags.setFlag('RESPONSES_API', legacyResponsesAPI === 'true');
+            // Remove legacy setting after migration
+            localStorage.removeItem('use_responses_api');
+        }
+        
+        // Migrate Web Search setting
+        const legacyWebSearch = localStorage.getItem('use_web_search');
+        if (legacyWebSearch !== null) {
+            FeatureFlags.setFlag('WEB_SEARCH', legacyWebSearch === 'true');
+            // Remove legacy setting after migration
+            localStorage.removeItem('use_web_search');
+        }
     }
 
     // Conversation management methods
@@ -342,10 +367,10 @@ class ChatAPI {
 
     /**
      * Check if Responses API should be used
-     * @returns {boolean} Whether to use the Responses API
+     * @returns {boolean} Whether to use Responses API
      */
     useResponsesAPI() {
-        return localStorage.getItem('use_responses_api') === 'true' && this.responseAPI !== null;
+        return FeatureFlags.isEnabled('RESPONSES_API') && this.responseAPI !== null;
     }
     
     /**
@@ -353,7 +378,7 @@ class ChatAPI {
      * @param {boolean} use - Whether to use the Responses API
      */
     setUseResponsesAPI(use) {
-        localStorage.setItem('use_responses_api', use.toString());
+        FeatureFlags.setFlag('RESPONSES_API', use);
     }
     
     /**
@@ -361,7 +386,7 @@ class ChatAPI {
      * @returns {boolean} Whether web search is enabled
      */
     useWebSearch() {
-        return localStorage.getItem('use_web_search') === 'true';
+        return FeatureFlags.isEnabled('WEB_SEARCH');
     }
     
     /**
@@ -369,7 +394,7 @@ class ChatAPI {
      * @param {boolean} use - Whether to use web search
      */
     setUseWebSearch(use) {
-        localStorage.setItem('use_web_search', use.toString());
+        FeatureFlags.setFlag('WEB_SEARCH', use);
     }
 
     /**
@@ -649,4 +674,7 @@ class ChatAPI {
 }
 
 // Create and export a singleton instance
-const chatAPI = new ChatAPI(); 
+const chatAPI = new ChatAPI();
+
+// Expose the instance globally for other modules
+window.chatAPI = chatAPI; 

@@ -1,11 +1,8 @@
-/**
- * Motion LLM Chat - Main
- * Initializes the application and connects all components
- */
+//  Motion LLM Chat -
+//Initializes the application and connects all components
+//
 
-// Global variables for API, UI, and DOM elements
-let chatAPI = null;
-let chatUI = null;
+
 let settingsContainer = null;
 let userInput = null;
 let responsesApiToggle = null;
@@ -27,12 +24,12 @@ function sendMessage(event) {
     if (!message) return;
     
     // Get selected model and provider
-    const model = chatAPI.getModel();
+    const model = window.chatAPI.getModel();
     const isAnthropicModel = model.startsWith('claude-');
     
     // Check if the appropriate API key is set
-    if (isAnthropicModel && !chatAPI.hasAnthropicApiKey()) {
-        chatUI.showError('Please enter your Anthropic API key in the settings panel.');
+    if (isAnthropicModel && !window.chatAPI.hasAnthropicApiKey()) {
+        window.chatUI.showError('Please enter your Anthropic API key in the settings panel.');
         
         // Open settings panel if it's not already open
         if (!settingsContainer.classList.contains('open')) {
@@ -40,8 +37,8 @@ function sendMessage(event) {
         }
         
         return;
-    } else if (!isAnthropicModel && !chatAPI.hasApiKey()) {
-        chatUI.showError('Please enter your OpenAI API key in the settings panel.');
+    } else if (!isAnthropicModel && !window.chatAPI.hasApiKey()) {
+        window.chatUI.showError('Please enter your OpenAI API key in the settings panel.');
         
         // Open settings panel if it's not already open
         if (!settingsContainer.classList.contains('open')) {
@@ -51,72 +48,164 @@ function sendMessage(event) {
         return;
     }
     
-    // Set loading state
-    chatUI.setLoadingState(true);
-    
-    // Add user message to the chat
-    chatUI.addUserMessage(message);
-    
     // Clear the input
-    chatUI.clearInput();
+    window.chatUI.clearInput();
     
-    // Show typing indicator
-    chatUI.showTypingIndicator();
+    // Add user message to the UI
+    const messageElement = window.chatUI.addUserMessage(message);
     
-    // Initialize AI response element
-    let aiMessageElement = null;
+    // Show typing indicator as AI prepares response
+    const typingIndicator = window.chatUI.showTypingIndicator();
     
-    // Send the message to the API
-    chatAPI.sendMessage(
-        message,
-        // onChunk handler - called for each chunk of the streamed response
-        (chunk) => {
-            // Create the AI message element on first chunk if it doesn't exist
-            if (!aiMessageElement) {
+    // Set loading state for UI feedback
+    window.chatUI.setLoadingState(true);
+    
+    // Add to conversation history (prevent duplicates)
+    const conversation = window.chatAPI.getCurrentConversation();
+    if (!conversation.messages) {
+        conversation.messages = [];
+    }
+    
+    // Check if this message is a duplicate of the last user message
+    const lastMessage = conversation.messages.length > 0 ? 
+        conversation.messages[conversation.messages.length - 1] : null;
+        
+    // Only add if it's not a duplicate or if the last message wasn't from the user
+    if (!lastMessage || lastMessage.role !== 'user' || lastMessage.content !== message) {
+        conversation.messages.push({
+            role: 'user',
+            content: message
+        });
+        
+        // Save updated conversation
+        window.chatAPI.saveConversations();
+    }
+    
+    // Determine if we should use the Responses API
+    const useResponsesApi = window.FeatureFlags.isEnabled('RESPONSES_API') && window.chatAPI.responseAPI !== null;
+    const useWebSearch = window.FeatureFlags.isEnabled('WEB_SEARCH');
+    
+    // Choose API method based on feature flags
+    if (useResponsesApi) {
+        // Use the Responses API
+        window.chatAPI.responseAPI.sendMessage(
+            message, 
+            model,
+            conversation.messages,
+            conversation.id,
+            // onProgress handler
+            (chunk) => {
+                // Update typing indicator with chunks as they arrive
+                if (typingIndicator && typeof typingIndicator.innerHTML !== 'undefined') {
+                    // Add the chunk to the content
+                    typingIndicator.innerHTML += chunk;
+                    
+                    // Keep scrolling to bottom as content comes in
+                    window.chatUI.scrollToBottom();
+                }
+            },
+            // onComplete handler
+            (response) => {
+                // Fade out typing dots
+                const dotsContainer = document.querySelector('.typing-dots');
+                if (dotsContainer) {
+                    dotsContainer.style.opacity = '0';
+                    dotsContainer.style.transition = 'opacity 0.3s ease-out';
+                }
+                
+                // Wait for transition to complete
+                setTimeout(() => {
+                    // Remove typing indicator
+                    window.chatUI.removeTypingIndicator();
+                    
+                    // Add AI response to the UI
+                    window.chatUI.addAIMessage(response.text);
+                    
+                    // Add to conversation history
+                    conversation.messages.push({
+                        role: 'assistant',
+                        content: response.text
+                    });
+                    
+                    // Save updated conversation
+                    window.chatAPI.saveConversations();
+                    
+                    // Remove loading state
+                    window.chatUI.setLoadingState(false);
+                }, 300); // Transition time
+            },
+            // onError handler
+            (error) => {
                 // Remove typing indicator
-                chatUI.removeTypingIndicator();
+                window.chatUI.removeTypingIndicator();
                 
-                // Add empty AI message
-                aiMessageElement = chatUI.createMessageElement('ai', '');
-                chatMessages.appendChild(aiMessageElement);
-                chatUI.scrollToBottom();
-            }
-            
-            // Append the chunk to the message content
-            const contentElement = aiMessageElement.querySelector('.message-content');
-            
-            // If the content includes code blocks, we need to re-render the entire message
-            if (chunk.includes('```') || contentElement.innerHTML.includes('<pre>')) {
-                // Get the current text plus the new chunk
-                const fullText = contentElement.textContent + chunk;
+                // Show error message
+                window.chatUI.showError(error);
                 
-                // Format and set the content
-                contentElement.innerHTML = chatUI.formatCodeBlocks(fullText);
-            } else {
-                // Just append the text
-                contentElement.textContent += chunk;
+                // Remove loading state
+                window.chatUI.setLoadingState(false);
+            },
+            // Use web search if enabled
+            useWebSearch
+        );
+    } else {
+        // Use the traditional Chat Completions API
+        window.chatAPI.sendMessage(
+            message,
+            // onChunk handler - called for each chunk of the streamed response
+            (chunk) => {
+                // Update typing indicator with chunks as they arrive
+                if (typingIndicator && typeof typingIndicator.innerHTML !== 'undefined') {
+                    // Add the chunk to the content 
+                    typingIndicator.innerHTML += chunk;
+                    
+                    // Keep scrolling to bottom as content grows
+                    window.chatUI.scrollToBottom();
+                }
+            },
+            // onComplete handler - called when the entire response is received
+            (fullResponse) => {
+                // Fade out typing dots
+                const dotsContainer = document.querySelector('.typing-dots');
+                if (dotsContainer) {
+                    dotsContainer.style.opacity = '0';
+                    dotsContainer.style.transition = 'opacity 0.3s ease-out';
+                }
+                
+                // Wait for transition to complete
+                setTimeout(() => {
+                    // Remove typing indicator
+                    window.chatUI.removeTypingIndicator();
+                    
+                    // Add AI response to the UI
+                    window.chatUI.addAIMessage(fullResponse);
+                    
+                    // Add to conversation history
+                    conversation.messages.push({
+                        role: 'assistant',
+                        content: fullResponse
+                    });
+                    
+                    // Save updated conversation
+                    window.chatAPI.saveConversations();
+                    
+                    // Remove loading state
+                    window.chatUI.setLoadingState(false);
+                }, 300); // Transition time
+            },
+            // onError handler - called on error
+            (error) => {
+                // Remove typing indicator
+                window.chatUI.removeTypingIndicator();
+                
+                // Show error message
+                window.chatUI.showError(error);
+                
+                // Remove loading state
+                window.chatUI.setLoadingState(false);
             }
-            
-            // Scroll to bottom with each chunk
-            chatUI.scrollToBottom();
-        },
-        // onComplete handler - called when the entire response is received
-        (fullResponse) => {
-            // Remove loading state
-            chatUI.setLoadingState(false);
-        },
-        // onError handler - called on error
-        (error) => {
-            // Remove typing indicator
-            chatUI.removeTypingIndicator();
-            
-            // Show error message
-            chatUI.showError(error);
-            
-            // Remove loading state
-            chatUI.setLoadingState(false);
-        }
-    );
+        );
+    }
     
     // Return false to prevent form submission
     return false;
@@ -124,9 +213,8 @@ function sendMessage(event) {
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize API and UI
-    chatAPI = new ChatAPI();
-    chatUI = new ChatUI();
+    // Initialize UI (chatAPI is already initialized in api.js)
+    window.chatUI = new ChatUI();
     
     // Get DOM elements
     settingsContainer = document.getElementById('settings-container');
@@ -135,20 +223,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize responses API toggle if present
     responsesApiToggle = document.getElementById('toggle-responses-api');
     if (responsesApiToggle) {
-        responsesApiToggle.checked = chatAPI.useResponsesAPI();
+        responsesApiToggle.checked = window.FeatureFlags.isEnabled('RESPONSES_API');
+        
+        // Add event listener for the toggle
+        responsesApiToggle.addEventListener('change', (event) => {
+            window.FeatureFlags.setFlag('RESPONSES_API', event.target.checked);
+            
+            // Update web search toggle availability
+            if (webSearchToggle) {
+                webSearchToggle.disabled = !event.target.checked;
+                // Disable web search if Responses API is disabled
+                if (!event.target.checked && webSearchToggle.checked) {
+                    webSearchToggle.checked = false;
+                    window.FeatureFlags.setFlag('WEB_SEARCH', false);
+                }
+            }
+        });
     }
     
     // Initialize web search toggle if present
     webSearchToggle = document.getElementById('toggle-web-search');
     if (webSearchToggle) {
-        webSearchToggle.checked = chatAPI.useWebSearch();
+        webSearchToggle.checked = window.FeatureFlags.isEnabled('WEB_SEARCH');
+        webSearchToggle.disabled = !window.FeatureFlags.isEnabled('RESPONSES_API');
         
-        // Web search should only be enabled if Responses API is enabled
-        webSearchToggle.disabled = !chatAPI.useResponsesAPI();
+        // Add event listener for the toggle
+        webSearchToggle.addEventListener('change', (event) => {
+            window.FeatureFlags.setFlag('WEB_SEARCH', event.target.checked);
+        });
     }
     
     // Initialize UI with conversation history
-    chatUI.initializeUI();
+    window.chatUI.initializeUI();
     
     // Set up global variables for easy access in event handlers
     chatMessages = document.getElementById('chat-messages');
@@ -156,14 +262,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set the current conversation title
     const conversationTitle = document.getElementById('conversation-title');
     if (conversationTitle) {
-        const currentConversation = chatAPI.getCurrentConversation();
+        const currentConversation = window.chatAPI.getCurrentConversation();
         if (currentConversation) {
             conversationTitle.textContent = currentConversation.title;
         }
     }
     
     // Load messages from current conversation
-    chatUI.loadConversation(chatAPI.currentConversationId);
+    window.chatUI.loadConversation(window.chatAPI.currentConversationId);
     
     // Set global handlers
     window.sendMessage = sendMessage;
@@ -179,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {boolean} enabled - Whether to enable the Responses API
  */
 function toggleResponsesAPI(enabled) {
-    chatAPI.setUseResponsesAPI(enabled);
+    window.chatAPI.setUseResponsesAPI(enabled);
     
     // Update web search toggle - only enable it if Responses API is enabled
     if (webSearchToggle) {
@@ -193,7 +299,7 @@ function toggleResponsesAPI(enabled) {
     }
     
     // Show notification
-    chatUI.showNotification(
+    window.chatUI.showNotification(
         enabled ? 
         'Responses API enabled. Enjoy stateful conversations and advanced features!' : 
         'Responses API disabled. Using standard Chat Completions API.'
@@ -205,10 +311,10 @@ function toggleResponsesAPI(enabled) {
  * @param {boolean} enabled - Whether to enable web search
  */
 function toggleWebSearch(enabled) {
-    chatAPI.setUseWebSearch(enabled);
+    window.chatAPI.setUseWebSearch(enabled);
     
     // Show notification
-    chatUI.showNotification(
+    window.chatUI.showNotification(
         enabled ? 
         'Web search enabled. The AI can now search the web for up-to-date information.' : 
         'Web search disabled.'
@@ -283,11 +389,11 @@ function setupEventListeners() {
             return;
         }
         
-        if (chatAPI.saveApiKey(key)) {
+        if (window.chatAPI.saveApiKey(key)) {
             apiKeyInput.value = '••••••••••••••••••••••';
             apiKeyStatus.textContent = 'API key saved successfully';
             apiKeyStatus.className = 'api-key-status status-success';
-            chatUI.updateEmptyState();
+            window.chatUI.updateEmptyState();
         } else {
             apiKeyStatus.textContent = 'Invalid API key format';
             apiKeyStatus.className = 'api-key-status status-error';
@@ -314,11 +420,11 @@ function setupEventListeners() {
             return;
         }
         
-        if (chatAPI.saveAnthropicApiKey(key)) {
+        if (window.chatAPI.saveAnthropicApiKey(key)) {
             apiKeyInput.value = '••••••••••••••••••••••';
             apiKeyStatus.textContent = 'API key saved successfully';
             apiKeyStatus.className = 'api-key-status status-success';
-            chatUI.updateEmptyState();
+            window.chatUI.updateEmptyState();
         } else {
             apiKeyStatus.textContent = 'Invalid API key format (should start with sk-ant-)';
             apiKeyStatus.className = 'api-key-status status-error';
@@ -334,11 +440,11 @@ function setupEventListeners() {
         
         if (!apiKeyInput || !apiKeyStatus) return;
         
-        chatAPI.clearApiKey();
+        window.chatAPI.clearApiKey();
         apiKeyInput.value = '';
         apiKeyStatus.textContent = 'API key cleared';
         apiKeyStatus.className = 'api-key-status';
-        chatUI.updateEmptyState();
+        window.chatUI.updateEmptyState();
     };
     
     window.clearAnthropicApiKey = function() {
@@ -347,22 +453,22 @@ function setupEventListeners() {
         
         if (!apiKeyInput || !apiKeyStatus) return;
         
-        chatAPI.clearAnthropicApiKey();
+        window.chatAPI.clearAnthropicApiKey();
         apiKeyInput.value = '';
         apiKeyStatus.textContent = 'API key cleared';
         apiKeyStatus.className = 'api-key-status';
-        chatUI.updateEmptyState();
+        window.chatUI.updateEmptyState();
     };
     
     window.saveModelSelection = function() {
         const modelSelect = document.getElementById('model-select');
         if (modelSelect) {
-            chatAPI.saveModel(modelSelect.value);
+            window.chatAPI.saveModel(modelSelect.value);
         }
     };
     
     window.setTheme = function(theme) {
-        chatUI.setTheme(theme);
+        window.chatUI.setTheme(theme);
     };
     
     // Set up event listeners for settings panel
@@ -421,7 +527,7 @@ function setupEventListeners() {
     
     if (modelSelect) {
         modelSelect.addEventListener('change', window.saveModelSelection);
-        modelSelect.value = chatAPI.getModel();
+        modelSelect.value = window.chatAPI.getModel();
     }
     
     if (themeLightBtn) {
@@ -438,7 +544,7 @@ function setupEventListeners() {
     
     // Initialize theme based on saved preference or system default
     const savedTheme = localStorage.getItem('theme') || 'system';
-    chatUI.setTheme(savedTheme);
+    window.chatUI.setTheme(savedTheme);
     
     // Add form submission event listener
     const messageForm = document.getElementById('message-form');
@@ -472,8 +578,8 @@ function setupEventListeners() {
     }
     
     // Check for API key on load and update UI accordingly
-    if (chatAPI.hasApiKey()) {
-        chatUI.updateEmptyState();
+    if (window.chatAPI.hasApiKey()) {
+        window.chatUI.updateEmptyState();
     } else {
         // Automatically open settings panel if no API key is set
         setTimeout(() => {
@@ -489,15 +595,55 @@ function setupEventListeners() {
     const anthropicApiKeyInput = document.getElementById('anthropic-api-key-input');
     const anthropicApiKeyStatus = document.getElementById('anthropic-api-key-status');
     
-    if (apiKeyInput && apiKeyStatus && chatAPI.hasApiKey()) {
+    if (apiKeyInput && apiKeyStatus && window.chatAPI.hasApiKey()) {
         apiKeyInput.value = '••••••••••••••••••••••';
         apiKeyStatus.textContent = 'API key is set';
         apiKeyStatus.className = 'api-key-status status-success';
     }
     
-    if (anthropicApiKeyInput && anthropicApiKeyStatus && chatAPI.hasAnthropicApiKey()) {
+    if (anthropicApiKeyInput && anthropicApiKeyStatus && window.chatAPI.hasAnthropicApiKey()) {
         anthropicApiKeyInput.value = '••••••••••••••••••••••';
         anthropicApiKeyStatus.textContent = 'API key is set';
         anthropicApiKeyStatus.className = 'api-key-status status-success';
     }
+    
+    // Initialize conversations list
+    window.chatUI.displayConversations(window.chatAPI.conversations);
+    window.chatUI.highlightCurrentConversation(window.chatAPI.currentConversationId);
+    
+    // Set up event listeners for feature flag changes
+    document.addEventListener('feature-flag:changed', (event) => {
+        const { flag, value } = event.detail;
+        
+        // Update UI based on flag changes
+        if (flag === 'RESPONSES_API') {
+            // Update the toggle if it exists
+            if (responsesApiToggle) {
+                responsesApiToggle.checked = value;
+            }
+            
+            // Disable web search toggle if Responses API is disabled
+            if (webSearchToggle) {
+                webSearchToggle.disabled = !value;
+                
+                // If Responses API is disabled, also disable web search
+                if (!value && webSearchToggle.checked) {
+                    webSearchToggle.checked = false;
+                    window.FeatureFlags.setFlag('WEB_SEARCH', false);
+                }
+            }
+            
+            console.log(`Responses API ${value ? 'enabled' : 'disabled'}`);
+        } else if (flag === 'WEB_SEARCH') {
+            // Update the toggle if it exists
+            if (webSearchToggle) {
+                webSearchToggle.checked = value;
+            }
+            
+            console.log(`Web Search ${value ? 'enabled' : 'disabled'}`);
+        }
+    });
+    
+    // Listen for settings toggle
+    const settingsToggle = document.getElementById('settings-toggle');
 } 

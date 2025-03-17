@@ -5,6 +5,15 @@
 
 class ChatUI {
     constructor() {
+        // Create fallback for marked.js if it's not available
+        if (typeof window.marked === 'undefined') {
+            console.warn('Marked.js not found, using basic fallback');
+            window.marked = (text) => {
+                return this.formatBasicMarkdown(text);
+            };
+            window.marked.setOptions = () => {}; // No-op
+        }
+        
         // UI elements
         this.chatMessages = document.getElementById('chat-messages');
         this.userInput = document.getElementById('user-input');
@@ -221,11 +230,22 @@ class ChatUI {
         
         // Load the messages
         const messages = chatAPI.conversationHistory;
-        messages.forEach(msg => {
+        
+        // Track conversation flow to group consecutive messages if needed
+        let previousRole = null;
+        
+        // Process messages in order
+        messages.forEach((msg, index) => {
+            // Only process user and assistant messages
             if (msg.role === 'user' || msg.role === 'assistant') {
                 const role = msg.role === 'user' ? 'user' : 'ai';
+                
+                // Create a clean chat interface with proper ordering
                 this.addMessageToChat(role, msg.content);
             }
+            
+            // Update previous role for next iteration
+            previousRole = msg.role;
         });
         
         // Close the sidebar on mobile
@@ -290,6 +310,19 @@ class ChatUI {
             this.emptyState.style.display = 'none';
         }
         
+        // Check for duplicate messages (prevent double sends)
+        const existingMessages = this.chatMessages.querySelectorAll('.user-message');
+        if (existingMessages.length > 0) {
+            const lastMessage = existingMessages[existingMessages.length - 1];
+            const lastMessageContent = lastMessage.querySelector('.message-content');
+            
+            // If the last message content is identical, don't add another one
+            if (lastMessageContent && lastMessageContent.textContent.trim() === message.trim()) {
+                // Just return the existing message element
+                return lastMessage;
+            }
+        }
+        
         // Create message element
         const messageElement = document.createElement('div');
         messageElement.className = 'message user-message';
@@ -341,6 +374,19 @@ class ChatUI {
         } else if (typeof message === 'object') {
             messageText = message.text || '';
             citations = message.citations || [];
+        }
+        
+        // Check for duplicate messages (prevent doubles)
+        const existingMessages = this.chatMessages.querySelectorAll('.ai-message');
+        if (existingMessages.length > 0) {
+            const lastMessage = existingMessages[existingMessages.length - 1];
+            const lastMessageContent = lastMessage.querySelector('.message-content');
+            
+            // If the last message content is identical, don't add another one
+            if (lastMessageContent && lastMessageContent.textContent.trim() === messageText.trim()) {
+                // Just return the existing message element
+                return lastMessage;
+            }
         }
         
         // Create the message element
@@ -401,6 +447,11 @@ class ChatUI {
      * Set up auto-resize for the textarea
      */
     setupTextareaAutoResize() {
+        if (!this.userInput) {
+            console.warn('User input textarea not found, skipping auto-resize setup');
+            return;
+        }
+        
         this.userInput.addEventListener('input', () => {
             // Reset height to auto to get the correct scrollHeight
             this.userInput.style.height = 'auto';
@@ -543,19 +594,45 @@ class ChatUI {
         this.typingIndicator.className = 'typing-indicator';
         this.typingIndicator.setAttribute('aria-label', 'AI is typing');
         
+        // Create a div for streamed content first (so dots overlay it)
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'typing-content';
+        contentDiv.innerHTML = '';
+        this.typingIndicator.appendChild(contentDiv);
+        
+        // Create dots container
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'typing-dots';
+        
         // Create the dots
         for (let i = 0; i < 3; i++) {
             const dot = document.createElement('div');
             dot.className = 'typing-dot';
-            this.typingIndicator.appendChild(dot);
+            dotsContainer.appendChild(dot);
+            
+            // Add animation if Motion library is available
+            if (this.hasMotion && window.motion) {
+                window.motion.animate(dot, 
+                    { opacity: [0.7, 1, 0.7], scale: [1, 1.2, 1] },
+                    { duration: 1, repeat: Infinity, delay: i * 0.2 }
+                );
+            }
         }
         
-        // Add it to the chat
-        this.chatMessages.appendChild(this.typingIndicator);
+        // Add dots container to typing indicator (after content)
+        this.typingIndicator.appendChild(dotsContainer);
+        
+        // Add to chat messages container
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+            chatMessages.appendChild(this.typingIndicator);
+        }
+        
+        // Scroll to the bottom
         this.scrollToBottom();
         
-        // Animate the dots
-        this.animateTypingDots();
+        // Return the content div, not the whole indicator
+        return contentDiv;
     }
 
     /**
@@ -911,29 +988,38 @@ class ChatUI {
      * Initialize UI interactions
      */
     initializeUI() {
-        // Auto-resize text area
-        this.setupAutoResize();
-        
-        // Set up character count
-        this.setupCharCount();
-        
-        // Set up buttons 
-        this.setupButtons();
-        
-        // Set up suggestion chips
-        this.setupSuggestionChips();
-        
-        // Set up markdown toolbar
-        this.setupMarkdownToolbar();
-        
-        // Initialize markdown preview
-        this.setupMarkdownPreview();
+        try {
+            // Auto-resize text area
+            this.setupAutoResize();
+            
+            // Set up character count
+            this.setupCharCount();
+            
+            // Set up buttons 
+            this.setupButtons();
+            
+            // Set up suggestion chips
+            this.setupSuggestionChips();
+            
+            // Set up markdown toolbar
+            this.setupMarkdownToolbar();
+            
+            // Initialize markdown preview
+            this.setupMarkdownPreview();
+        } catch (error) {
+            console.error('Error initializing UI:', error);
+        }
     }
     
     /**
      * Set up auto-resizing textarea
      */
     setupAutoResize() {
+        if (!this.userInput) {
+            console.warn('User input element not found for auto-resize setup');
+            return;
+        }
+        
         this.userInput.addEventListener('input', () => {
             // Reset height to auto to calculate proper scrollHeight
             this.userInput.style.height = 'auto';
@@ -950,6 +1036,11 @@ class ChatUI {
      * Set up character count functionality
      */
     setupCharCount() {
+        if (!this.userInput || !this.charCount) {
+            console.warn('User input or character count element not found for char count setup');
+            return;
+        }
+        
         // Initial count
         this.updateCharCount();
         
@@ -963,6 +1054,10 @@ class ChatUI {
      * Update character count display
      */
     updateCharCount() {
+        if (!this.userInput || !this.charCount) {
+            return;
+        }
+        
         const currentLength = this.userInput.value.length;
         const maxLength = 4000; // OpenAI's typical max length
         this.charCount.textContent = `${currentLength}/${maxLength}`;
@@ -1171,6 +1266,17 @@ class ChatUI {
     formatMessage(text) {
         if (!text) return '';
         
+        // Check if marked is defined globally (window.marked) and not as a local variable
+        if (typeof window.marked === 'undefined' || typeof marked === 'undefined') {
+            // Create a simple fallback if marked.js failed to load
+            console.warn('Marked.js not available in formatMessage - using fallback');
+            window.marked = (text) => {
+                return this.formatBasicMarkdown(text);
+            };
+            // Make it also available in the current scope
+            marked = window.marked;
+        }
+        
         // Handle when a message starts with "markdown" or variations (case insensitive)
         const markdownStartRegex = /^\s*(markdown|markdown:)\s*\n([\s\S]*?)$/im;
         const markdownMatch = text.match(markdownStartRegex);
@@ -1178,15 +1284,13 @@ class ChatUI {
         if (markdownMatch) {
             // Process the content after "markdown" directly as markdown
             const content = markdownMatch[2];
-            if (typeof marked !== 'undefined') {
-                try {
-                    return this.sanitizeHTML(marked(content));
-                } catch (error) {
-                    console.error('Error parsing markdown:', error);
-                }
+            try {
+                return this.sanitizeHTML(marked(content));
+            } catch (error) {
+                console.error('Error parsing markdown:', error);
+                // If marked fails, fall back to basic formatting
+                return this.formatBasicMarkdown(content);
             }
-            // If marked fails or isn't available, fall back to basic formatting
-            return this.formatBasicMarkdown(content);
         }
         
         // Create a copy of the text for processing
@@ -1224,205 +1328,22 @@ class ChatUI {
             return placeholder;
         });
         
-        // Use marked.js if available
-        if (typeof marked !== 'undefined') {
-            try {
-                // Process the text with marked (code blocks are now placeholders)
-                processedText = this.sanitizeHTML(marked(processedText));
-                
-                // Restore code blocks
-                for (let i = 0; i < codeBlockCount; i++) {
-                    processedText = processedText.replace(`CODE_BLOCK_PLACEHOLDER_${i}`, codeBlocks[i]);
-                }
-                
-                return processedText;
-            } catch (error) {
-                console.error('Error parsing markdown:', error);
-                // Fall back to basic parsing
-            }
-        }
-        
-        // Basic fallback markdown parsing (if marked.js fails or is not available)
-        let formattedText = text;
-        
-        // Handle code blocks with triple backticks and language
-        formattedText = formattedText.replace(/```([a-z]*)\n([\s\S]*?)```/g, (match, language, code) => {
-            // Special handling for markdown examples - render the markdown content
-            if (language.toLowerCase() === 'markdown') {
-                // Basic markdown parsing for the content inside
-                let parsedContent = code.trim();
-                
-                // Apply basic markdown formatting for fallback
-                parsedContent = this.formatBasicMarkdown(parsedContent);
-                
-                return `<div class="rendered-markdown">${parsedContent}</div>`;
-            } else {
-                return `<pre><code class="language-${language}">${this.escapeHTML(code.trim())}</code></pre>`;
-            }
-        });
-        
-        // Handle code blocks without language specification
-        formattedText = formattedText.replace(/```([\s\S]*?)```/g, (match, code) => {
-            return `<pre><code>${this.escapeHTML(code.trim())}</code></pre>`;
-        });
-        
-        // Handle indented code blocks (4 spaces or tab)
-        const lines = formattedText.split('\n');
-        let inCodeBlock = false;
-        let codeContent = [];
-        let newLines = [];
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
+        // Use marked.js (either real or our fallback)
+        try {
+            // Process the text with marked (code blocks are now placeholders)
+            processedText = this.sanitizeHTML(marked(processedText));
             
-            if (line.startsWith('    ') || line.startsWith('\t')) {
-                if (!inCodeBlock) {
-                    inCodeBlock = true;
-                    codeContent = [];
-                }
-                codeContent.push(line.replace(/^(\s{4}|\t)/, ''));
-            } else {
-                if (inCodeBlock) {
-                    // End code block
-                    inCodeBlock = false;
-                    if (codeContent.length > 0) {
-                        newLines.push(`<pre><code>${this.escapeHTML(codeContent.join('\n'))}</code></pre>`);
-                    }
-                    codeContent = [];
-                }
-                newLines.push(line);
+            // Restore code blocks
+            for (let i = 0; i < codeBlockCount; i++) {
+                processedText = processedText.replace(`CODE_BLOCK_PLACEHOLDER_${i}`, codeBlocks[i]);
             }
-        }
-        
-        // Handle case where code block is at the end
-        if (inCodeBlock && codeContent.length > 0) {
-            newLines.push(`<pre><code>${this.escapeHTML(codeContent.join('\n'))}</code></pre>`);
-        }
-        
-        formattedText = newLines.join('\n');
-        
-        // Inline code
-        formattedText = formattedText.replace(/`([^`]+)`/g, (match, code) => {
-            return `<code>${this.escapeHTML(code)}</code>`;
-        });
-        
-        // Basic markdown
-        // Bold
-        formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        formattedText = formattedText.replace(/__(.*?)__/g, '<strong>$1</strong>');
-        
-        // Italic
-        formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        formattedText = formattedText.replace(/_(.*?)_/g, '<em>$1</em>');
-        
-        // Links
-        formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-        
-        // Auto-link URLs
-        formattedText = formattedText.replace(
-            /(?<!["'=])(https?:\/\/[^\s"'<>]+)/g, 
-            '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-        
-        // Headers (simplified)
-        formattedText = formattedText.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
-        formattedText = formattedText.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
-        formattedText = formattedText.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-        
-        // Unordered lists (improved to handle multiple items)
-        let inUl = false;
-        const listLines = formattedText.split('\n');
-        const processedListLines = [];
-        
-        for (let i = 0; i < listLines.length; i++) {
-            const line = listLines[i];
-            const unorderedMatch = line.match(/^- (.*?)$/);
             
-            if (unorderedMatch) {
-                if (!inUl) {
-                    processedListLines.push('<ul>');
-                    inUl = true;
-                }
-                processedListLines.push(`<li>${unorderedMatch[1]}</li>`);
-            } else {
-                if (inUl) {
-                    processedListLines.push('</ul>');
-                    inUl = false;
-                }
-                processedListLines.push(line);
-            }
+            return processedText;
+        } catch (error) {
+            console.error('Error parsing markdown:', error);
+            // Fall back to basic parsing
+            return this.formatBasicMarkdown(text);
         }
-        
-        if (inUl) {
-            processedListLines.push('</ul>');
-        }
-        
-        formattedText = processedListLines.join('\n');
-        
-        // Ordered lists (improved to handle multiple items)
-        let inOl = false;
-        const olLines = formattedText.split('\n');
-        const processedOlLines = [];
-        
-        for (let i = 0; i < olLines.length; i++) {
-            const line = olLines[i];
-            const orderedMatch = line.match(/^\d+\. (.*?)$/);
-            
-            if (orderedMatch) {
-                if (!inOl) {
-                    processedOlLines.push('<ol>');
-                    inOl = true;
-                }
-                processedOlLines.push(`<li>${orderedMatch[1]}</li>`);
-            } else {
-                if (inOl) {
-                    processedOlLines.push('</ol>');
-                    inOl = false;
-                }
-                processedOlLines.push(line);
-            }
-        }
-        
-        if (inOl) {
-            processedOlLines.push('</ol>');
-        }
-        
-        formattedText = processedOlLines.join('\n');
-        
-        // Blockquotes
-        inUl = false;
-        const quoteLines = formattedText.split('\n');
-        const processedQuoteLines = [];
-        
-        for (let i = 0; i < quoteLines.length; i++) {
-            const line = quoteLines[i];
-            const quoteMatch = line.match(/^> (.*?)$/);
-            
-            if (quoteMatch) {
-                if (!inUl) {
-                    processedQuoteLines.push('<blockquote>');
-                    inUl = true;
-                }
-                processedQuoteLines.push(`${quoteMatch[1]}`);
-            } else {
-                if (inUl) {
-                    processedQuoteLines.push('</blockquote>');
-                    inUl = false;
-                }
-                processedQuoteLines.push(line);
-            }
-        }
-        
-        if (inUl) {
-            processedQuoteLines.push('</blockquote>');
-        }
-        
-        formattedText = processedQuoteLines.join('\n');
-        
-        // Line breaks
-        formattedText = formattedText.replace(/\n/g, '<br>');
-        
-        return formattedText;
     }
     
     /**
@@ -1508,7 +1429,7 @@ class ChatUI {
     }
 
     /**
-     * Apply basic markdown formatting
+     * Apply basic markdown formatting as a fallback when marked.js is not available
      * @param {string} text - Text to format with markdown
      * @returns {string} HTML formatted text
      */
@@ -1516,6 +1437,28 @@ class ChatUI {
         if (!text) return '';
         
         let formattedText = text;
+        
+        // Handle code blocks with triple backticks and language
+        formattedText = formattedText.replace(/```([a-z]*)\n([\s\S]*?)```/g, (match, language, code) => {
+            // Special handling for markdown examples
+            if (language.toLowerCase() === 'markdown') {
+                // Basic markdown parsing for the content inside
+                let parsedContent = this.formatBasicMarkdown(code.trim());
+                return `<div class="rendered-markdown">${parsedContent}</div>`;
+            } else {
+                return `<pre><code class="language-${language}">${this.escapeHTML(code.trim())}</code></pre>`;
+            }
+        });
+        
+        // Handle code blocks without language specification
+        formattedText = formattedText.replace(/```([\s\S]*?)```/g, (match, code) => {
+            return `<pre><code>${this.escapeHTML(code.trim())}</code></pre>`;
+        });
+        
+        // Inline code
+        formattedText = formattedText.replace(/`([^`]+)`/g, (match, code) => {
+            return `<code>${this.escapeHTML(code)}</code>`;
+        });
         
         // Bold
         formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -1528,25 +1471,10 @@ class ChatUI {
         // Links
         formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
         
-        // Auto-link URLs
-        formattedText = formattedText.replace(
-            /(?<!["'=])(https?:\/\/[^\s"'<>]+)/g, 
-            '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
-        );
-        
         // Headers
         formattedText = formattedText.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
         formattedText = formattedText.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
         formattedText = formattedText.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-        
-        // Unordered lists
-        formattedText = formattedText.replace(/^- (.*?)$/gm, '<ul><li>$1</li></ul>');
-        
-        // Ordered lists
-        formattedText = formattedText.replace(/^\d+\. (.*?)$/gm, '<ol><li>$1</li></ol>');
-        
-        // Blockquotes
-        formattedText = formattedText.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
         
         // Line breaks
         formattedText = formattedText.replace(/\n/g, '<br>');
@@ -1600,7 +1528,101 @@ class ChatUI {
             }
         }, 4000);
     }
+
+    /**
+     * Display conversations in the sidebar
+     * @param {Object} conversations - The conversations to display
+     */
+    displayConversations(conversations) {
+        if (!this.conversationList) {
+            console.warn('Conversation list element not found, skipping conversation display');
+            return;
+        }
+        
+        // Ensure we have valid conversations object
+        if (!conversations || typeof conversations !== 'object') {
+            console.warn('Invalid conversations object provided to displayConversations');
+            return;
+        }
+        
+        // Clear the list
+        this.conversationList.innerHTML = '';
+        
+        // Sort by updated time, most recent first
+        const sortedIds = Object.keys(conversations).sort((a, b) => {
+            return new Date(conversations[b].updatedAt) - new Date(conversations[a].updatedAt);
+        });
+        
+        // Generate the HTML for each conversation
+        sortedIds.forEach(id => {
+            const conv = conversations[id];
+            const isActive = id === window.chatAPI.currentConversationId;
+            
+            const item = document.createElement('div');
+            item.className = `conversation-item ${isActive ? 'active' : ''}`;
+            item.setAttribute('data-id', id);
+            
+            // Create the title safely
+            const safeTitle = conv.title ? this.escapeHTML(conv.title) : 'Untitled';
+            
+            // Create the conversation item content
+            item.innerHTML = `
+                <div class="conversation-info">
+                    <div class="conversation-title">${safeTitle}</div>
+                    <div class="conversation-date">${new Date(conv.updatedAt).toLocaleDateString()}</div>
+                </div>
+                <button class="delete-conversation-button" data-id="${id}" aria-label="Delete conversation">×</button>
+            `;
+            
+            // Add to the list
+            this.conversationList.appendChild(item);
+            
+            // Add click handler to select this conversation
+            item.addEventListener('click', (e) => {
+                // Ignore if clicked on the delete button
+                if (e.target.closest('.delete-conversation-button')) return;
+                
+                window.chatAPI.setCurrentConversation(id);
+                this.loadConversation(id);
+                this.highlightCurrentConversation(id);
+            });
+            
+            // Add delete button handler
+            const deleteButton = item.querySelector('.delete-conversation-button');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Delete this conversation?')) {
+                        this.deleteConversation(id);
+                    }
+                });
+            }
+        });
+    }
+    
+    /**
+     * Highlight the current conversation in the sidebar
+     * @param {string} id - The ID of the conversation to highlight
+     */
+    highlightCurrentConversation(id) {
+        if (!this.conversationList) return;
+        
+        // Remove active class from all items
+        const items = this.conversationList.querySelectorAll('.conversation-item');
+        items.forEach(item => {
+            item.classList.remove('active');
+        });
+        
+        // Add active class to current item
+        const currentItem = this.conversationList.querySelector(`.conversation-item[data-id="${id}"]`);
+        if (currentItem) {
+            currentItem.classList.add('active');
+        }
+    }
 }
 
 // Create and export a singleton instance
-const chatUI = new ChatUI(); 
+const chatUI = new ChatUI();
+
+// Expose the instance globally for other modules
+window.chatUI = chatUI; 
