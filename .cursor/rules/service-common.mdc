@@ -1,6 +1,6 @@
 ---
 description: Shared standards and guidelines across all services
-globs: "app/**/*"
+globs: app/**/*
 alwaysApply: false
 ---
  ---

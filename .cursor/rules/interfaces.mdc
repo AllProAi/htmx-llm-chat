@@ -1,1 +1,194 @@
- 
+---
+description: "Interface guidelines for cross-service communication"
+globs: ["app/lib/**/*"]
+alwaysApply: true
+---
+
+# Interfaces
+
+## Cross-Service Communication
+
+This document defines the interaction points between different services in the application and establishes protocols for communication between them.
+
+## Communication Patterns
+
+### Event-Based Communication
+- Use custom events for loosely coupled communication
+- Document event names, payloads, and purposes
+- Implement proper cleanup of event listeners
+
+```javascript
+// Example: Dispatching an event
+document.dispatchEvent(new CustomEvent('message:sent', {
+  detail: {
+    messageId: 'msg_123',
+    content: 'Hello world',
+    timestamp: Date.now()
+  }
+}));
+
+// Example: Listening for an event
+document.addEventListener('message:sent', (event) => {
+  console.log(event.detail);
+});
+```
+
+### Direct Method Calls
+- Use for tightly coupled components or performance-critical paths
+- Clearly document method signatures and returns
+- Handle errors gracefully
+
+### State Observation
+- For components that need to react to state changes
+- Use MutationObserver for DOM changes
+- Implement custom observer patterns for internal state
+
+## Service Boundaries
+
+### API Service ↔ UI Service
+- UI requests message sending via direct method call
+- API service emits events for progress updates
+- UI subscribes to API events for real-time feedback
+
+```javascript
+// UI -> API (Direct call)
+chatAPI.sendMessage(message, 
+  (chunk) => { /* progress callback */ }, 
+  (response) => { /* complete callback */ },
+  (error) => { /* error callback */ }
+);
+
+// API -> UI (Event)
+document.dispatchEvent(new CustomEvent('api:response-complete', {
+  detail: { response }
+}));
+```
+
+### UI Service ↔ Animation Service
+- UI requests animations via direct method calls
+- Animation service checks motion preferences
+- UI provides fallbacks for unsupported scenarios
+
+```javascript
+// UI -> Animation
+animations.animateMessageEntrance(messageElement, 'user');
+
+// Animation -> UI (conditional callback)
+animateMessageEntrance(element, role, onComplete) {
+  if (this.shouldAnimate()) {
+    motion.animate(element, {/*...*/}, {
+      onComplete: () => {
+        if (onComplete) onComplete();
+      }
+    });
+  } else {
+    if (onComplete) onComplete();
+  }
+}
+```
+
+## Data Models
+
+### Message Object
+```javascript
+{
+  id: String,        // Unique identifier
+  role: String,      // 'user' or 'ai'
+  content: String,   // Message content
+  timestamp: Number, // Unix timestamp
+  messageType: String, // 'text', 'image', etc.
+  metadata: {        // Optional additional data
+    model: String,   // AI model used
+    citations: Array // Web search citations
+  }
+}
+```
+
+### Conversation Object
+```javascript
+{
+  id: String,        // Unique identifier
+  title: String,     // Conversation title
+  messages: Array,   // Array of Message objects
+  createdAt: String, // ISO date string
+  updatedAt: String, // ISO date string
+  responseId: String // Latest response ID for continuation
+}
+```
+
+### Settings Object
+```javascript
+{
+  theme: String,     // 'light', 'dark', 'system'
+  model: String,     // AI model selection
+  features: {        // Feature flags
+    webSearch: Boolean,
+    responsesAPI: Boolean
+  }
+}
+```
+
+## Feature Flag Integration
+
+### Flag Definition
+```javascript
+const FEATURES = {
+  RESPONSES_API: localStorage.getItem('feature_responses_api') === 'true',
+  WEB_SEARCH: localStorage.getItem('feature_web_search') === 'true',
+  IMAGE_UPLOAD: localStorage.getItem('feature_image_upload') === 'true'
+};
+```
+
+### Usage Pattern
+- Check at service boundaries
+- Provide fallbacks for disabled features
+- Clear messaging for unavailable functionality
+
+```javascript
+function sendMessage(message) {
+  if (FEATURES.RESPONSES_API) {
+    // Use new Responses API
+    responseAPI.sendMessage(/*...*/);
+  } else {
+    // Use traditional Chat Completions API
+    chatAPI.sendMessage(/*...*/);
+  }
+}
+```
+
+## Error Propagation
+
+- Errors should bubble up to the UI layer for user feedback
+- Include error codes, messages, and possible solutions
+- Log errors appropriately based on severity
+
+```javascript
+try {
+  await apiOperation();
+} catch (error) {
+  console.error('[API Error]', error);
+  document.dispatchEvent(new CustomEvent('api:error', {
+    detail: {
+      code: error.code || 'unknown',
+      message: error.message || 'An unknown error occurred',
+      recoverable: error.recoverable || false
+    }
+  }));
+}
+```
+
+## Documentation Requirements
+
+All interfaces between services must document:
+- Method signatures with parameter and return types
+- Event names and payload structures
+- State changes and side effects
+- Error scenarios and handling
+- Examples of correct usage
+
+## Interface Evolution
+
+- Maintain backward compatibility when changing interfaces
+- Deprecate old methods/events before removal
+- Version interfaces when making breaking changes
+- Document migration paths for consumers 

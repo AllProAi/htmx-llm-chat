@@ -1,1 +1,220 @@
- 
+---
+description: Web search service guidelines for OpenAI Responses API integration
+globs: app/lib/response-api.js, app/components/**/web-search*
+alwaysApply: false
+---
+ ---
+description: "Web search service guidelines for OpenAI Responses API integration"
+globs: ["app/lib/response-api.js", "app/components/**/web-search*"]
+alwaysApply: true
+---
+
+# Web Search Service
+
+## Responsibilities
+- Integration with OpenAI Responses API web search capabilities
+- Rendering search results in the chat interface
+- Processing and formatting citations and references
+- Providing collapsible/expandable search result containers
+- Handling web search preferences and settings
+
+## Dependencies
+- ResponseAPI class
+- Feature flag system
+- UI rendering components
+- Animation service for transitions
+
+## Public Interfaces
+
+### ResponseAPI Integration
+```javascript
+// Within ResponseAPI.sendMessage method
+async sendMessage(message, model, history, conversationId, onProgress, onComplete, onError, useWebSearch = false) {
+  // Configure request with web search when enabled
+  if (useWebSearch) {
+    body.tools = [{ type: "web_search" }];
+  }
+  
+  // Process and extract web search results
+  const formattedResponse = this.formatResponseWithCitations(responseData);
+}
+```
+
+### Citation Formatting
+```javascript
+formatResponseWithCitations(responseData) {
+  let formattedResponse = {
+    text: '',
+    citations: []
+  };
+  
+  // Extract citations from annotations
+  if (content.annotations && Array.isArray(content.annotations)) {
+    for (const annotation of content.annotations) {
+      if (annotation.type === 'url_citation') {
+        formattedResponse.citations.push({
+          title: annotation.title || '',
+          url: annotation.url || ''
+        });
+      }
+    }
+  }
+  
+  return formattedResponse;
+}
+```
+
+## Component Specifications
+
+### Web Search Results Component
+```html
+<div class="web-search-results">
+  <div class="web-search-header">
+    <div class="web-search-icon">🔍</div>
+    <h3>Web Search Results</h3>
+    <button class="toggle-results-btn" aria-label="Toggle search results">↑</button>
+  </div>
+  
+  <div class="search-results-container">
+    <!-- Individual search results -->
+    <div class="search-result">
+      <h4>Result Title</h4>
+      <div class="result-meta">source.url - Date</div>
+      <p class="result-snippet">Snippet of content from the search result...</p>
+    </div>
+  </div>
+</div>
+```
+
+### Citation Reference Component
+```html
+<div class="sources">
+  <h4>Sources:</h4>
+  <ol>
+    <li><a href="https://example.com/page" target="_blank" rel="noopener noreferrer">example.com/page</a></li>
+    <!-- Additional sources -->
+  </ol>
+</div>
+```
+
+## Implementation Guidelines
+
+### Response Processing
+- Identify and extract web search results from API response
+- Parse citation annotations and link them to the text
+- Replace citation markers with superscript numbers
+- Maintain mapping between citations and their sources
+
+```javascript
+function processCitations(text, citations) {
+  let processedText = text;
+  
+  // Replace citation markers [1], [2], etc. with superscript
+  citations.forEach((citation, index) => {
+    const citationNumber = index + 1;
+    const citationRegex = new RegExp(`\\[${citationNumber}\\]`, 'g');
+    processedText = processedText.replace(
+      citationRegex, 
+      `<sup data-citation="${citationNumber}">${citationNumber}</sup>`
+    );
+  });
+  
+  return processedText;
+}
+```
+
+### WebSearch Results Rendering
+- Group search results by relevance
+- Show website favicon when available
+- Provide snippet of content for context
+- Format dates in user-friendly way
+- Support collapsible/expandable container
+
+### State Integration
+- Maintain web search preference in user settings
+- Toggle web search capability through UI
+- Store citation data with message for persistence
+- Handle web search errors gracefully
+
+### Accessibility Considerations
+- Keyboard navigation for search results
+- Proper ARIA roles and labels
+- Visual indication of external links
+- Screen reader friendly citations
+
+### Security Guidelines
+- Validate all URLs before rendering
+- Add rel="noopener noreferrer" to external links
+- Sanitize content from external sources
+- Open links in new tabs with target="_blank"
+
+## CSS Guidelines
+
+```css
+.web-search-results {
+  background-color: var(--background-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  margin: var(--spacing-md) 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.web-search-header {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background-color: var(--background-tertiary);
+  cursor: pointer;
+}
+
+.search-results-container {
+  padding: var(--spacing-md);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-result {
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.result-meta {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.sources {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color-light);
+  font-size: 0.9em;
+}
+
+sup[data-citation] {
+  cursor: pointer;
+  color: var(--color-primary);
+  font-weight: bold;
+}
+```
+
+## Animation Guidelines
+- Smooth expand/collapse for search results container
+- Subtle entrance animation for search results
+- Highlight effect when clicking on citation numbers
+- Transition effects for hover states
+
+## Feature Flag Integration
+- Implement behind `feature_web_search` flag
+- Provide UI indication when feature is available
+- Gracefully degrade when feature is disabled
+- Document feature in settings panel
+
+## Testing Strategy
+- Test with and without web search enabled
+- Validate citation parsing and linking
+- Test accessibility with screen readers
+- Ensure responsive design on all devices
+- Verify correct behavior with different result counts

@@ -1,1 +1,174 @@
- 
+---
+description: State management guidelines for client-side application data
+globs: app/lib/main.js, app/lib/api.js
+alwaysApply: false
+---
+ ---
+description: "State management guidelines for client-side application data"
+globs: ["app/lib/main.js", "app/lib/api.js"]
+alwaysApply: true
+---
+
+# State Management Service
+
+## Responsibilities
+- Managing application data and state persistence
+- Storing and retrieving conversation history
+- Handling user preferences and settings
+- Managing feature flags for progressive functionality
+- Providing a consistent interface for state mutations
+- Ensuring data integrity and migration between versions
+
+## Dependencies
+- Browser localStorage API
+- EventTarget for state change notifications
+- JSON for serialization/deserialization
+
+## Core State Objects
+
+### Application State
+```javascript
+{
+  currentConversationId: String,    // Active conversation ID
+  conversations: Object,            // Map of all conversations
+  settings: {
+    theme: String,                  // 'light', 'dark', 'system'
+    model: String,                  // Selected AI model
+    features: {                     // Feature flags
+      webSearch: Boolean,
+      responsesAPI: Boolean
+    }
+  },
+  uiState: {
+    sidebarOpen: Boolean,
+    settingsPanelOpen: Boolean,
+    isLoading: Boolean
+  }
+}
+```
+
+### Conversation State
+```javascript
+{
+  id: String,              // Unique identifier
+  title: String,           // Conversation title
+  messages: Array,         // Array of Message objects
+  createdAt: String,       // ISO date string
+  updatedAt: String,       // ISO date string
+  responseId: String       // Latest response ID for continuation
+}
+```
+
+### Message State
+```javascript
+{
+  id: String,              // Unique identifier
+  role: String,            // 'user' or 'ai'
+  content: String,         // Message content
+  timestamp: Number,       // Unix timestamp
+  citations: Array,        // Web search citations (if applicable)
+}
+```
+
+## LocalStorage Keys
+- `openai_api_key`: User's OpenAI API key (masked/encrypted)
+- `anthropic_api_key`: User's Anthropic API key (masked/encrypted)
+- `current_conversation_id`: Currently active conversation ID
+- `conversations`: JSON string of all conversation data
+- `settings`: User preferences and settings
+- `feature_responses_api`: Feature flag for Responses API
+- `feature_web_search`: Feature flag for web search capability
+- `feature_image_upload`: Feature flag for image upload (future)
+
+## Public Interfaces
+
+### State Retrieval
+```javascript
+function getCurrentConversation(): Object;
+function getConversations(): Object;
+function getSettings(): Object;
+function getTheme(): string;
+function getModel(): string;
+function getFeatureFlag(name: string): boolean;
+```
+
+### State Mutation
+```javascript
+function createNewConversation(title: string): string;
+function updateConversation(id: string, data: Object): void;
+function deleteConversation(id: string): boolean;
+function addMessageToConversation(conversationId: string, message: Object): void;
+function setCurrentConversation(id: string): void;
+function updateSettings(settings: Object): void;
+function setTheme(theme: string): void;
+function setModel(model: string): void;
+function setFeatureFlag(name: string, value: boolean): void;
+```
+
+### State Persistence
+```javascript
+function saveConversations(): void;
+function saveSettings(): void;
+function saveApiKey(key: string): void;
+function clearApiKey(): void;
+function clearAllData(): void;
+```
+
+## Implementation Guidelines
+
+### State Initialization
+- Load state from localStorage on application start
+- Provide defaults for missing or corrupt state
+- Validate loaded state for data integrity
+- Initialize new conversation if none exists
+
+### State Updates
+- Make atomic updates to state objects
+- Emit state change events after updates
+- Persist changes to localStorage immediately
+- Implement optimistic updates where appropriate
+
+### Data Migrations
+- Version state schemas to track changes
+- Provide migration functions for state format updates
+- Validate migrated data before persistence
+- Fallback to defaults if migration fails
+
+```javascript
+function migrateStateIfNeeded(state) {
+  const version = state.version || '1.0.0';
+  
+  if (version === '1.0.0') {
+    // Migrate to version 1.1.0
+    state = migrateToV1_1_0(state);
+    state.version = '1.1.0';
+  }
+  
+  return state;
+}
+```
+
+### Error Handling
+- Implement robust error handling for localStorage operations
+- Detect storage quota limits and handle gracefully
+- Provide fallback behaviors when storage fails
+- Log storage errors for debugging
+
+### Security Considerations
+- Never store sensitive data in plain text
+- Mask or encrypt API keys before storage
+- Sanitize user input before storing
+- Implement clear data functionality for privacy
+
+### Performance Optimization
+- Batch localStorage writes to reduce overhead
+- Use memoization for frequently accessed state
+- Consider memory usage for large conversation histories
+- Implement pagination or lazy loading for large datasets
+
+## Testing Strategy
+- Unit test state management functions
+- Test state persistence across page reloads
+- Validate migration logic with mock data
+- Test error scenarios (quota limits, corrupt data)
+- Ensure proper cleanup after tests
