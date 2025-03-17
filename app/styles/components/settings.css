@@ -50,12 +50,8 @@
 
 .settings-container.open {
   right: 0;
-}
-
-.settings-container.open::before {
-  opacity: 1;
   visibility: visible;
-  z-index: -1;
+  opacity: 1;
 }
 
 /* Add a separate overlay for the whole page */

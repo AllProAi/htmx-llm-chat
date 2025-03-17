@@ -3,10 +3,22 @@
  * Initializes the application and connects all components
  */
 
+// Global variables for API, UI, and DOM elements
+let chatAPI = null;
+let chatUI = null;
+let settingsContainer = null;
+let userInput = null;
+let responsesApiToggle = null;
+let webSearchToggle = null;
+let chatMessages = null;
+
 // Handler for message submission
 function sendMessage(event) {
     // Prevent form submission
-    if (event) event.preventDefault();
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation(); // Also stop propagation
+    }
     
     // Get the user's message
     const message = userInput.value.trim();
@@ -105,6 +117,9 @@ function sendMessage(event) {
             chatUI.setLoadingState(false);
         }
     );
+    
+    // Return false to prevent form submission
+    return false;
 }
 
 // Initialize the application when the DOM is loaded
@@ -136,8 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatUI.initializeUI();
     
     // Set up global variables for easy access in event handlers
-    window.chatMessages = document.getElementById('chat-messages');
-    window.settingsContainer = document.getElementById('settings-container');
+    chatMessages = document.getElementById('chat-messages');
     
     // Set the current conversation title
     const conversationTitle = document.getElementById('conversation-title');
@@ -151,24 +165,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load messages from current conversation
     chatUI.loadConversation(chatAPI.currentConversationId);
     
-    // Set global handler for sending messages
+    // Set global handlers
     window.sendMessage = sendMessage;
+    window.toggleResponsesAPI = toggleResponsesAPI;
+    window.toggleWebSearch = toggleWebSearch;
     
+    // Setup additional event listeners and UI elements
+    setupEventListeners();
+});
+
+/**
+ * Toggle the Responses API
+ * @param {boolean} enabled - Whether to enable the Responses API
+ */
+function toggleResponsesAPI(enabled) {
+    chatAPI.setUseResponsesAPI(enabled);
+    
+    // Update web search toggle - only enable it if Responses API is enabled
+    if (webSearchToggle) {
+        webSearchToggle.disabled = !enabled;
+        
+        // If disabling Responses API, also disable web search
+        if (!enabled && webSearchToggle.checked) {
+            webSearchToggle.checked = false;
+            toggleWebSearch(false);
+        }
+    }
+    
+    // Show notification
+    chatUI.showNotification(
+        enabled ? 
+        'Responses API enabled. Enjoy stateful conversations and advanced features!' : 
+        'Responses API disabled. Using standard Chat Completions API.'
+    );
+}
+
+/**
+ * Toggle web search functionality
+ * @param {boolean} enabled - Whether to enable web search
+ */
+function toggleWebSearch(enabled) {
+    chatAPI.setUseWebSearch(enabled);
+    
+    // Show notification
+    chatUI.showNotification(
+        enabled ? 
+        'Web search enabled. The AI can now search the web for up-to-date information.' : 
+        'Web search disabled.'
+    );
+}
+
+// Expose functions to window object
+window.toggleResponsesAPI = toggleResponsesAPI;
+window.toggleWebSearch = toggleWebSearch;
+
+/**
+ * Set up all event listeners for the application
+ */
+function setupEventListeners() {
     // Setup settings panel toggle
     const toggleSettingsButton = document.getElementById('toggle-settings-button');
     const closeSettingsButton = document.getElementById('close-settings-button');
     
     if (toggleSettingsButton) {
-        toggleSettingsButton.addEventListener('click', () => {
+        toggleSettingsButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default action
+            event.stopPropagation(); // Stop propagation to prevent immediate closing
             settingsContainer.classList.add('open');
             document.body.classList.add('settings-open');
+            console.log('Settings panel opened'); // Add debug log
         });
     }
     
     if (closeSettingsButton) {
-        closeSettingsButton.addEventListener('click', () => {
+        closeSettingsButton.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default action
             settingsContainer.classList.remove('open');
             document.body.classList.remove('settings-open');
+            console.log('Settings panel closed'); // Add debug log
         });
     }
     
@@ -185,9 +259,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Stop propagation for clicks inside the settings panel
-    settingsContainer.addEventListener('click', (event) => {
-        event.stopPropagation();
-    });
+    if (settingsContainer) {
+        settingsContainer.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+    }
     
     // Set up API key-related functions
     window.saveApiKey = function() {
@@ -201,7 +277,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (key === '••••••••••••••••••••••') {
             apiKeyStatus.textContent = 'Please enter a new API key';
             apiKeyStatus.className = 'api-key-status status-error';
-            animations.shakeElement(apiKeyInput);
+            if (window.animations && window.animations.shakeElement) {
+                window.animations.shakeElement(apiKeyInput);
+            }
             return;
         }
         
@@ -213,7 +291,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             apiKeyStatus.textContent = 'Invalid API key format';
             apiKeyStatus.className = 'api-key-status status-error';
-            animations.shakeElement(apiKeyInput);
+            if (window.animations && window.animations.shakeElement) {
+                window.animations.shakeElement(apiKeyInput);
+            }
         }
     };
     
@@ -228,7 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (key === '••••••••••••••••••••••') {
             apiKeyStatus.textContent = 'Please enter a new API key';
             apiKeyStatus.className = 'api-key-status status-error';
-            animations.shakeElement(apiKeyInput);
+            if (window.animations && window.animations.shakeElement) {
+                window.animations.shakeElement(apiKeyInput);
+            }
             return;
         }
         
@@ -240,7 +322,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             apiKeyStatus.textContent = 'Invalid API key format (should start with sk-ant-)';
             apiKeyStatus.className = 'api-key-status status-error';
-            animations.shakeElement(apiKeyInput);
+            if (window.animations && window.animations.shakeElement) {
+                window.animations.shakeElement(apiKeyInput);
+            }
         }
     };
     
@@ -361,8 +445,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (messageForm) {
         messageForm.addEventListener('submit', (event) => {
             event.preventDefault();
+            event.stopPropagation();
             sendMessage(event);
+            return false; // Return false to prevent form submission
         });
+        
+        // Add onsubmit handler as a fallback
+        messageForm.onsubmit = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            sendMessage(event);
+            return false;
+        };
     }
     
     // Add event listener for pressing Enter in the input field
@@ -371,7 +465,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Send message on Enter, allow Shift+Enter for new line
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                sendMessage();
+                event.stopPropagation();
+                sendMessage(event);
             }
         });
     }
@@ -405,49 +500,4 @@ document.addEventListener('DOMContentLoaded', () => {
         anthropicApiKeyStatus.textContent = 'API key is set';
         anthropicApiKeyStatus.className = 'api-key-status status-success';
     }
-});
-
-/**
- * Toggle the Responses API
- * @param {boolean} enabled - Whether to enable the Responses API
- */
-function toggleResponsesAPI(enabled) {
-    chatAPI.setUseResponsesAPI(enabled);
-    
-    // Update web search toggle - only enable it if Responses API is enabled
-    if (webSearchToggle) {
-        webSearchToggle.disabled = !enabled;
-        
-        // If disabling Responses API, also disable web search
-        if (!enabled && webSearchToggle.checked) {
-            webSearchToggle.checked = false;
-            toggleWebSearch(false);
-        }
-    }
-    
-    // Show notification
-    chatUI.showNotification(
-        enabled ? 
-        'Responses API enabled. Enjoy stateful conversations and advanced features!' : 
-        'Responses API disabled. Using standard Chat Completions API.'
-    );
-}
-
-/**
- * Toggle web search functionality
- * @param {boolean} enabled - Whether to enable web search
- */
-function toggleWebSearch(enabled) {
-    chatAPI.setUseWebSearch(enabled);
-    
-    // Show notification
-    chatUI.showNotification(
-        enabled ? 
-        'Web search enabled. The AI can now search the web for up-to-date information.' : 
-        'Web search disabled.'
-    );
-}
-
-// Expose functions to window object
-window.toggleResponsesAPI = toggleResponsesAPI;
-window.toggleWebSearch = toggleWebSearch; 
+} 
