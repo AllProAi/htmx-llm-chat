@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motion LLM Chat</title>
+    
+    <!-- Meta tags for SEO and social sharing -->
+    <meta name="description" content="A lightweight chat interface for OpenAI's language models with smooth animations">
+    <meta name="keywords" content="AI, chat, LLM, Motion, animations, OpenAI">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="app/styles/main.css">
+    
+    <!-- Suppress source map errors -->
+    <script>
+        // Suppress console errors for source maps
+        const originalError = console.error;
+        console.error = function(msg) {
+            if (typeof msg === 'string' && 
+                (msg.includes('Source map error') || 
+                 msg.includes('installHook.js.map'))) {
+                return;
+            }
+            originalError.apply(console, arguments);
+        };
+    </script>
+    
+    <!-- HTMX for dynamic content loading -->
+    <script src="https://unpkg.com/htmx.org@1.9.9"></script>
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Motion (formerly Framer Motion) for animations -->
+    <script>
+        // Animation fallback CSS for when Motion library fails to load
+        if (!document.getElementById('animation-fallbacks')) {
+            const style = document.createElement('style');
+            style.id = 'animation-fallbacks';
+            style.textContent = `
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); opacity: 1; }
+                    50% { transform: translateY(-10px); opacity: 0.5; }
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    20% { transform: translateX(-5px); }
+                    40% { transform: translateX(5px); }
+                    60% { transform: translateX(-5px); }
+                    80% { transform: translateX(5px); }
+                }
+                .typing-dot {
+                    animation: bounce 1s infinite;
+                }
+                .typing-dot:nth-child(2) {
+                    animation-delay: 0.2s;
+                }
+                .typing-dot:nth-child(3) {
+                    animation-delay: 0.4s;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/motion@10/dist/motion.min.js" onerror="console.warn('Motion library failed to load. Using CSS fallbacks for animations.')"></script>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="app/public/favicon.ico" type="image/x-icon">
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="app/styles/main.css" as="style">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar for chat history -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Conversations</h2>
+                <button id="new-chat-button" class="new-chat-button" title="New chat">
+                    <span>+</span>
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <div id="conversation-list" class="conversation-list">
+                    <!-- Conversations will be listed here -->
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button id="toggle-sidebar-button" class="toggle-sidebar-button" title="Toggle sidebar">
+                    <span>◀</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main chat interface -->
+        <div class="main-content">
+            <!-- Header with settings button -->
+            <header class="app-header">
+                <div class="app-header-left">
+                    <button id="show-sidebar-button" class="show-sidebar-button" title="Show sidebar">
+                        <span>☰</span>
+                    </button>
+                    <h1 class="app-title">Motion LLM Chat</h1>
+                </div>
+                <div class="conversation-title-container" id="conversation-title-container">
+                    <!-- Editable conversation title -->
+                    <span class="conversation-title" id="conversation-title" contenteditable="true"></span>
+                </div>
+                <button class="settings-button" id="toggle-settings-button">
+                    <span class="settings-icon">⚙️</span>
+                </button>
+            </header>
+            
+            <!-- Settings panel container -->
+            <div id="settings-container" class="settings-container">
+                <!-- Embedding settings panel directly to avoid CORS issues -->
+                <div class="settings-panel">
+                    <div class="settings-header">
+                        <h2>Settings</h2>
+                        <button 
+                            class="close-button" 
+                            id="close-settings-button"
+                            aria-label="Close settings">
+                            ✕
+                        </button>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>OpenAI API Key</h3>
+                        <p class="settings-description">
+                            Enter your OpenAI API key to use the chat functionality.
+                            Your key is stored locally in your browser and never sent to our servers.
+                        </p>
+                        
+                        <div class="api-key-input-container">
+                            <input 
+                                type="password" 
+                                id="api-key-input" 
+                                class="api-key-input" 
+                                placeholder="sk-..." 
+                                aria-label="OpenAI API Key"
+                                autocomplete="off"
+                            />
+                            <button 
+                                id="toggle-api-key-visibility" 
+                                class="toggle-visibility-button" 
+                                aria-label="Toggle API key visibility">
+                                👁️
+                            </button>
+                        </div>
+                        
+                        <div class="settings-button-group">
+                            <button 
+                                id="save-api-key" 
+                                class="primary-button">
+                                Save Key
+                            </button>
+                            <button 
+                                id="clear-api-key" 
+                                class="secondary-button">
+                                Clear Key
+                            </button>
+                        </div>
+                        
+                        <div id="api-key-status" class="api-key-status"></div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Anthropic API Key</h3>
+                        <p class="settings-description">
+                            Enter your Anthropic API key to use Claude models.
+                            Your key is stored locally in your browser and never sent to our servers.
+                        </p>
+                        <p class="settings-description" style="color: var(--error-color);">
+                            <strong>Note:</strong> Due to browser security restrictions (CORS), 
+                            Anthropic API cannot be called directly from the browser. 
+                            To use Claude models, you'll need to deploy a backend proxy server.
+                        </p>
+                        
+                        <div class="api-key-input-container">
+                            <input 
+                                type="password" 
+                                id="anthropic-api-key-input" 
+                                class="api-key-input" 
+                                placeholder="sk-ant-..." 
+                                aria-label="Anthropic API Key"
+                                autocomplete="off"
+                            />
+                            <button 
+                                id="toggle-anthropic-api-key-visibility" 
+                                class="toggle-visibility-button" 
+                                aria-label="Toggle Anthropic API key visibility">
+                                👁️
+                            </button>
+                        </div>
+                        
+                        <div class="settings-button-group">
+                            <button 
+                                id="save-anthropic-api-key" 
+                                class="primary-button">
+                                Save Key
+                            </button>
+                            <button 
+                                id="clear-anthropic-api-key" 
+                                class="secondary-button">
+                                Clear Key
+                            </button>
+                        </div>
+                        
+                        <div id="anthropic-api-key-status" class="api-key-status"></div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Model Selection</h3>
+                        <p class="settings-description">
+                            Select which AI model to use for chat.
+                        </p>
+                        
+                        <select id="model-select" class="model-select">
+                            <optgroup label="OpenAI Models">
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
+                                <option value="gpt-4o">GPT-4o (More capable)</option>
+                            </optgroup>
+                            <optgroup label="Anthropic Models (Requires Proxy)">
+                                <option value="claude-3-haiku" disabled>Claude 3 Haiku - CORS Restricted</option>
+                                <option value="claude-3-sonnet" disabled>Claude 3 Sonnet - CORS Restricted</option>
+                                <option value="claude-3-opus" disabled>Claude 3 Opus - CORS Restricted</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Theme</h3>
+                        <div class="theme-toggle">
+                            <button 
+                                id="theme-light" 
+                                class="theme-button" 
+                                aria-label="Light theme">
+                                ☀️ Light
+                            </button>
+                            <button 
+                                id="theme-dark" 
+                                class="theme-button" 
+                                aria-label="Dark theme">
+                                🌙 Dark
+                            </button>
+                            <button 
+                                id="theme-system" 
+                                class="theme-button active" 
+                                aria-label="System theme">
+                                💻 System
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>Features</h3>
+                        <p class="settings-description">
+                            <strong>Speech-to-Text:</strong> Click the microphone button to record your voice 
+                            and convert it to text using OpenAI's Whisper model. This uses your OpenAI API key.
+                        </p>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>About</h3>
+                        <p class="settings-description">
+                            Motion LLM Chat is a lightweight, client-side application for interacting with OpenAI's language models.
+                            Your conversations stay in your browser and are not stored on any servers.
+                        </p>
+                        <p class="settings-description">
+                            <strong>Browser API Limitations:</strong> Due to browser security restrictions (CORS), 
+                            this app can only directly connect to APIs that allow browser requests (like OpenAI).
+                            Anthropic Claude requires a server-side proxy.
+                        </p>
+                        <p class="settings-description">
+                            <a href="https://github.com/yourusername/motion-llm-chat" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Main chat area -->
+            <main class="chat-area" id="chat-messages">
+                <!-- Empty state when no messages -->
+                <div class="empty-state" id="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <p class="empty-state-text">Start a conversation with AI</p>
+                </div>
+                
+                <!-- Messages will be inserted here -->
+            </main>
+            
+            <!-- Input area for user messages -->
+            <div class="input-container">
+                <form id="message-form" class="message-form">
+                    <div class="textarea-wrapper">
+                        <div class="markdown-toolbar">
+                            <button type="button" class="md-button" data-md="**" title="Bold">
+                                <strong>B</strong>
+                            </button>
+                            <button type="button" class="md-button" data-md="*" title="Italic">
+                                <em>I</em>
+                            </button>
+                            <button type="button" class="md-button" data-md="[](url)" title="Link">
+                                🔗
+                            </button>
+                            <button type="button" class="md-button" data-md="```\n\n```" title="Code Block">
+                                &lt;/&gt;
+                            </button>
+                            <button type="button" class="md-button" data-md="> " title="Blockquote">
+                                💬
+                            </button>
+                            <button type="button" class="md-button" data-md="- " title="Bullet List">
+                                •
+                            </button>
+                            <button type="button" class="md-button" data-md="1. " title="Numbered List">
+                                1.
+                            </button>
+                            <button type="button" class="md-button" data-md="# " title="Heading">
+                                H
+                            </button>
+                        </div>
+                        <textarea 
+                            id="user-input" 
+                            class="user-input"
+                            placeholder="Type a message..." 
+                            required
+                            rows="1"
+                        ></textarea>
+                        <div class="markdown-preview" id="markdown-preview"></div>
+                        <div class="input-actions">
+                            <button type="button" class="action-button" id="emoji-button" title="Add emoji" aria-label="Add emoji">
+                                😊
+                            </button>
+                            <button type="button" class="action-button" id="preview-button" title="Toggle markdown preview" aria-label="Toggle markdown preview">
+                                👁️
+                            </button>
+                            <button type="button" class="action-button" id="clear-button" title="Clear input" aria-label="Clear input">
+                                ✕
+                            </button>
+                        </div>
+                        <div class="char-count" id="char-count">0/4000</div>
+                    </div>
+                    <div class="input-buttons">
+                        <button type="button" class="record-button" id="record-button" title="Record audio message" aria-label="Record audio message">
+                            <span class="record-icon">🎤</span>
+                        </button>
+                        <button type="submit" class="send-button" id="send-button" title="Send message" aria-label="Send message">
+                            <span class="send-icon">➤</span>
+                        </button>
+                    </div>
+                </form>
+                <div class="input-suggestions" id="input-suggestions">
+                    <div class="suggestion-chip">Tell me a story</div>
+                    <div class="suggestion-chip">Explain quantum physics</div>
+                    <div class="suggestion-chip">Write a poem</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript for API interaction and animations -->
+    <script src="app/lib/api.js"></script>
+    <script src="app/lib/ui.js"></script>
+    <script src="app/lib/animations.js"></script>
+    <script src="app/lib/main.js"></script>
+</body>
+</html> 

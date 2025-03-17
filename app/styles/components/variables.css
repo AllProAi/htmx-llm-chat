@@ -1,0 +1,100 @@
+/* 
+ * Motion LLM Chat - Variables
+ */
+
+:root {
+  /* Color Palette */
+  --primary: #4F46E5;
+  --secondary: #10B981;
+  --background: #FFFFFF;
+  --dark-background: #111827;
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --user-message-bg: #EEF2FF;
+  --ai-message-bg: #ECFDF5;
+  --accent: #8B5CF6;
+  --error: #EF4444;
+  --sidebar-bg: #F3F4F6;
+  --sidebar-hover: #E5E7EB;
+  --sidebar-active: #4F46E5;
+  --sidebar-active-text: #FFFFFF;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --card-bg: #FFFFFF;
+  --button-bg: #F3F4F6;
+  --button-hover-bg: #E5E7EB;
+  --error-color: #EF4444;
+  --accent-color: #8B5CF6;
+  
+  /* Typography */
+  --base-font-size: 16px;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Fira Code', 'Courier New', monospace;
+  
+  /* Layout */
+  --max-width: 1200px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 60px;
+  --header-height: 60px;
+  --input-height: 70px;
+  --border-radius: 12px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Transitions */
+  --transition-speed: 250ms;
+  --transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode variables */
+[data-theme="dark"] {
+  --background: #111827;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --user-message-bg: #374151;
+  --ai-message-bg: #065F46;
+  --sidebar-bg: #1F2937;
+  --sidebar-hover: #374151;
+  --sidebar-active: #6366F1;
+  --sidebar-active-text: #FFFFFF;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --card-bg: #1F2937;
+  --button-bg: #374151;
+  --button-hover-bg: #4B5563;
+}
+
+/* Apply prefers-color-scheme dark mode automatically for system theme */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="system"] {
+    --background: #111827;
+    --text-primary: #F9FAFB;
+    --text-secondary: #9CA3AF;
+    --user-message-bg: #374151;
+    --ai-message-bg: #065F46;
+    --sidebar-bg: #1F2937;
+    --sidebar-hover: #374151;
+    --sidebar-active: #6366F1;
+    --sidebar-active-text: #FFFFFF;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --card-bg: #1F2937;
+    --button-bg: #374151;
+    --button-hover-bg: #4B5563;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-family);
+  font-size: var(--base-font-size);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--background);
+} 

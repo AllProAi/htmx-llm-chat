@@ -1,0 +1,38 @@
+/* 
+ * Motion LLM Chat - Layout
+ */
+
+/* Main Container Layout */
+.app-container {
+  display: flex;
+  height: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* To ensure flex items don't overflow */
+}
+
+/* Accessibility - reduced motion */
+@media (prefers-reduced-motion) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .app-title {
+    font-size: 1.2rem;
+  }
+  
+  .conversation-title {
+    font-size: 0.9rem;
+  }
+} 

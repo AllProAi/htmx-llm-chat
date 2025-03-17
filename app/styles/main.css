@@ -1,0 +1,15 @@
+/* 
+ * Motion LLM Chat - Main Stylesheet
+ * Following the design guidelines in docs/design_document.md
+ */
+
+/* Import component stylesheets */
+@import 'components/variables.css';
+@import 'components/layout.css';
+@import 'components/sidebar.css';
+@import 'components/header.css';
+@import 'components/settings.css';
+@import 'components/chat.css';
+@import 'components/input.css';
+@import 'components/toast.css';
+@import 'components/animations.css'; 

@@ -1,0 +1,248 @@
+<div class="settings-panel">
+    <div class="settings-header">
+        <h2>Settings</h2>
+        <button 
+            class="close-button" 
+            hx-on:click="document.getElementById('settings-container').classList.remove('open')"
+            aria-label="Close settings">
+            ✕
+        </button>
+    </div>
+    
+    <div class="settings-section">
+        <h3>OpenAI API Key</h3>
+        <p class="settings-description">
+            Enter your OpenAI API key to use the chat functionality.
+            Your key is stored locally in your browser and never sent to our servers.
+        </p>
+        
+        <div class="api-key-input-container">
+            <input 
+                type="password" 
+                id="api-key-input" 
+                class="api-key-input" 
+                placeholder="sk-..." 
+                aria-label="OpenAI API Key"
+                autocomplete="off"
+            />
+            <button 
+                id="toggle-api-key-visibility" 
+                class="toggle-visibility-button" 
+                aria-label="Toggle API key visibility">
+                👁️
+            </button>
+        </div>
+        
+        <div class="settings-button-group">
+            <button 
+                id="save-api-key" 
+                class="primary-button" 
+                hx-on:click="saveApiKey()">
+                Save Key
+            </button>
+            <button 
+                id="clear-api-key" 
+                class="secondary-button" 
+                hx-on:click="clearApiKey()">
+                Clear Key
+            </button>
+        </div>
+        
+        <div id="api-key-status" class="api-key-status"></div>
+    </div>
+    
+    <div class="settings-section">
+        <h3>Model Selection</h3>
+        <p class="settings-description">
+            Select which OpenAI model to use for chat.
+        </p>
+        
+        <select id="model-select" class="model-select" hx-on:change="saveModelSelection()">
+            <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
+            <option value="gpt-4o">GPT-4o (More capable)</option>
+        </select>
+    </div>
+    
+    <div class="settings-section">
+        <h3>Theme</h3>
+        <div class="theme-toggle">
+            <button 
+                id="theme-light" 
+                class="theme-button" 
+                hx-on:click="setTheme('light')" 
+                aria-label="Light theme">
+                ☀️ Light
+            </button>
+            <button 
+                id="theme-dark" 
+                class="theme-button" 
+                hx-on:click="setTheme('dark')" 
+                aria-label="Dark theme">
+                🌙 Dark
+            </button>
+            <button 
+                id="theme-system" 
+                class="theme-button active" 
+                hx-on:click="setTheme('system')" 
+                aria-label="System theme">
+                💻 System
+            </button>
+        </div>
+    </div>
+    
+    <div class="settings-section">
+        <h3>About</h3>
+        <p class="settings-description">
+            Motion LLM Chat is a lightweight, client-side application for interacting with OpenAI's language models.
+            Your conversations stay in your browser and are not stored on any servers.
+        </p>
+        <p class="settings-description">
+            <a href="https://github.com/yourusername/motion-llm-chat" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+        </p>
+    </div>
+</div>
+
+<style>
+    .settings-panel {
+        padding: var(--spacing-lg);
+        background-color: var(--background);
+    }
+    
+    .settings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .close-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        transition: color var(--transition-speed) var(--transition-easing);
+    }
+    
+    .close-button:hover {
+        color: var(--primary);
+    }
+    
+    .settings-section {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .settings-section h3 {
+        margin-bottom: var(--spacing-sm);
+        color: var(--primary);
+    }
+    
+    .settings-description {
+        margin-bottom: var(--spacing-md);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .api-key-input-container {
+        display: flex;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .api-key-input {
+        flex: 1;
+        padding: var(--spacing-md);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius) 0 0 var(--border-radius);
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+    }
+    
+    .toggle-visibility-button {
+        padding: 0 var(--spacing-md);
+        background-color: var(--background);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-left: none;
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        cursor: pointer;
+    }
+    
+    .settings-button-group {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .primary-button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: background-color var(--transition-speed) var(--transition-easing);
+    }
+    
+    .primary-button:hover {
+        background-color: #4338CA;
+    }
+    
+    .secondary-button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        background-color: transparent;
+        color: var(--text-primary);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: background-color var(--transition-speed) var(--transition-easing);
+    }
+    
+    .secondary-button:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .api-key-status {
+        min-height: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .status-success {
+        color: var(--secondary);
+    }
+    
+    .status-error {
+        color: var(--error);
+    }
+    
+    .model-select {
+        width: 100%;
+        padding: var(--spacing-sm);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius);
+        background-color: var(--background);
+        color: var(--text-primary);
+    }
+    
+    .theme-toggle {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+    
+    .theme-button {
+        flex: 1;
+        padding: var(--spacing-sm) var(--spacing-md);
+        background-color: transparent;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: background-color var(--transition-speed) var(--transition-easing);
+    }
+    
+    .theme-button:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .theme-button.active {
+        background-color: var(--primary);
+        color: white;
+    }
+</style> 

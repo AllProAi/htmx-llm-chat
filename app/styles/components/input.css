@@ -1,0 +1,277 @@
+/* 
+ * Motion LLM Chat - Input Area
+ */
+
+/* Input area */
+.input-container {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  background-color: var(--background);
+  position: relative;
+  animation: slideUpFade 0.5s ease-out;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  z-index: 5;
+}
+
+.message-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.textarea-wrapper {
+  position: relative;
+  flex: 1;
+  transition: transform 0.2s ease;
+  background-color: var(--background);
+  border-radius: calc(var(--border-radius) * 1.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.textarea-wrapper:focus-within {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.user-input {
+  width: 100%;
+  min-height: 44px;
+  max-height: 200px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  padding-right: calc(var(--spacing-md) * 2 + 24px);
+  border: none;
+  border-radius: calc(var(--border-radius) * 1.5);
+  resize: none;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  line-height: 1.5;
+  background-color: transparent;
+  color: var(--text-primary);
+  overflow-y: auto;
+  transition: background-color 0.3s ease;
+}
+
+.user-input:focus {
+  outline: none;
+}
+
+/* Input actions container for buttons inside input */
+.input-actions {
+  position: absolute;
+  right: var(--spacing-md);
+  bottom: 50%;
+  transform: translateY(50%);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.action-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  padding: var(--spacing-xs);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  color: var(--primary);
+  background-color: rgba(79, 70, 229, 0.1);
+}
+
+/* Outside buttons */
+.input-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.send-button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+  position: relative;
+  z-index: 6;
+}
+
+.send-button:hover {
+  transform: scale(1.1) rotate(5deg);
+  background-color: #4338CA;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.5);
+}
+
+.send-button:active {
+  transform: scale(0.95);
+}
+
+.send-button:disabled {
+  background-color: var(--button-bg);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Record button styles */
+.record-button {
+  background-color: var(--button-bg);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 6;
+}
+
+.record-button:hover {
+  background-color: var(--button-hover-bg);
+  transform: scale(1.08);
+}
+
+.record-button:active {
+  transform: scale(0.95);
+}
+
+.record-button.recording {
+  background-color: var(--error-color);
+  animation: pulse 1.5s infinite;
+}
+
+/* Character count and other elements */
+.char-count {
+  position: absolute;
+  right: var(--spacing-lg);
+  bottom: var(--spacing-xs);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.textarea-wrapper:focus-within .char-count {
+  opacity: 1;
+}
+
+/* Input suggestions */
+.input-suggestions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-sm);
+  padding: 0 var(--spacing-sm);
+}
+
+.suggestion-chip {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--button-bg);
+  border-radius: 16px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.suggestion-chip:hover {
+  background-color: var(--button-hover-bg);
+  transform: translateY(-2px);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .input-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .message-form {
+    gap: var(--spacing-sm);
+  }
+  
+  .user-input {
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-right: calc(var(--spacing-md) * 2 + 24px);
+    font-size: 0.95rem;
+  }
+  
+  .send-button, .record-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+}
+
+/* Markdown toolbar styling */
+.markdown-toolbar {
+  display: flex;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  gap: var(--spacing-xs);
+  background-color: var(--background);
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+.md-button {
+  background: none;
+  border: none;
+  border-radius: var(--spacing-xs);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.md-button:hover {
+  background-color: var(--button-hover-bg);
+  color: var(--text-primary);
+}
+
+.md-button:active {
+  transform: scale(0.95);
+}
+
+/* Markdown preview styling */
+.markdown-preview {
+  width: 100%;
+  min-height: 44px;
+  max-height: 200px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--background);
+  color: var(--text-primary);
+  overflow-y: auto;
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  line-height: 1.5;
+} 

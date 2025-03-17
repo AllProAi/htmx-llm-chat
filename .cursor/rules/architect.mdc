@@ -1,0 +1,54 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: "System-wide architecture guidelines for Framer Motion LLM Chat App"
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Framer Motion LLM Chat App Architecture
+
+## Project Overview
+A simple chat application that integrates with OpenAI's API and uses Framer Motion for animated UI elements. The app will feature a clean, HTML-based interface with HTMX for interactivity and smooth animations provided by Framer Motion.
+
+## Tech Stack
+- HTML5 for structure
+- CSS3 for styling
+- JavaScript (Vanilla) for client-side logic
+- HTMX for dynamic content loading without full page refreshes
+- Framer Motion (via CDN) for animations
+- OpenAI API for LLM integration
+
+## Project Structure
+```
+/
+├── app/
+│   ├── components/   # Reusable HTML components
+│   ├── styles/       # CSS files
+│   ├── lib/          # JavaScript utilities
+│   └── public/       # Static assets
+├── index.html        # Main entry point
+└── README.md         # Project documentation
+```
+
+## Responsibilities
+- User interface with clean, responsive design
+- Chat functionality with OpenAI API integration
+- Smooth animations using Framer Motion
+- State management in the browser
+- No authentication required (API key will be entered by user)
+
+## Dependencies
+- No build tools or frameworks required
+- OpenAI API (client-side integration)
+- HTMX for AJAX interactions
+- Framer Motion loaded via CDN
+
+## Interfaces
+- Chat input field
+- Message display area with user/AI distinction
+- Settings panel for API key
+- Typing indicators using Framer Motion animations 

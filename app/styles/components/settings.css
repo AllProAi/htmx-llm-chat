@@ -1,0 +1,233 @@
+/* 
+ * Motion LLM Chat - Settings Panel
+ */
+
+/* Settings panel styles */
+.settings-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  transition: transform var(--transition-speed) var(--transition-easing);
+  z-index: 12;
+}
+
+.settings-button:hover {
+  transform: rotate(30deg);
+  color: var(--primary);
+}
+
+.settings-container {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  background-color: var(--background);
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 15;
+  overflow-y: auto;
+  transition: right var(--transition-speed) var(--transition-easing);
+}
+
+.settings-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-speed) var(--transition-easing),
+              visibility var(--transition-speed) var(--transition-easing);
+  pointer-events: none;
+}
+
+.settings-container.open {
+  right: 0;
+}
+
+.settings-container.open::before {
+  opacity: 1;
+  visibility: visible;
+  z-index: -1;
+}
+
+/* Add a separate overlay for the whole page */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 14;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--transition-speed) var(--transition-easing),
+              visibility var(--transition-speed) var(--transition-easing);
+  pointer-events: none;
+}
+
+body.settings-open::after {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.settings-panel {
+  padding: var(--spacing-md);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color var(--transition-speed) var(--transition-easing);
+}
+
+.close-button:hover {
+  color: var(--error);
+}
+
+.settings-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.settings-section h3 {
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.settings-description {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.api-key-input-container {
+  display: flex;
+  margin-bottom: var(--spacing-md);
+}
+
+.api-key-input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-family: var(--font-family);
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.toggle-visibility-button {
+  background: none;
+  border: none;
+  padding: 0 var(--spacing-sm);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.settings-button-group {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.primary-button, .secondary-button {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: background-color var(--transition-speed) var(--transition-easing);
+}
+
+.primary-button {
+  background-color: var(--primary);
+  color: white;
+}
+
+.primary-button:hover {
+  background-color: #4338CA;
+}
+
+.secondary-button {
+  background-color: var(--button-bg);
+  color: var(--text-primary);
+}
+
+.secondary-button:hover {
+  background-color: var(--button-hover-bg);
+}
+
+.api-key-status {
+  font-size: 0.9rem;
+  margin-top: var(--spacing-xs);
+}
+
+.status-success {
+  color: var(--secondary);
+}
+
+.status-error {
+  color: var(--error);
+}
+
+.model-select {
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+}
+
+.theme-toggle {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.theme-button {
+  flex: 1;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background-color: var(--button-bg);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color var(--transition-speed) var(--transition-easing);
+}
+
+.theme-button:hover {
+  background-color: var(--button-hover-bg);
+}
+
+.theme-button.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+} 
