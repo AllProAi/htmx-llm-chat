@@ -326,46 +326,75 @@ class ChatUI {
     
     /**
      * Add an AI message to the chat
-     * @param {string} message - The AI's message
+     * @param {string|Object} message - The message content or formatted message object
      */
     addAIMessage(message) {
-        // Hide empty state
-        if (this.emptyState) {
-            this.emptyState.style.display = 'none';
+        // Remove typing indicator if present
+        this.removeTypingIndicator();
+        
+        // Check if message is a simple string or formatted object with citations
+        let messageText = '';
+        let citations = [];
+        
+        if (typeof message === 'string') {
+            messageText = message;
+        } else if (typeof message === 'object') {
+            messageText = message.text || '';
+            citations = message.citations || [];
         }
         
-        // Create message element
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message ai-message';
+        // Create the message element
+        const messageElement = this.createMessageElement('assistant', messageText);
         
-        // Get formatted timestamp
-        const timestamp = this.formatTimestamp();
+        // Add citations if present
+        if (citations && citations.length > 0) {
+            const citationsContainer = document.createElement('div');
+            citationsContainer.className = 'citations-container';
+            
+            const citationsTitle = document.createElement('div');
+            citationsTitle.className = 'citations-title';
+            citationsTitle.textContent = 'Web Search Results';
+            citationsContainer.appendChild(citationsTitle);
+            
+            const citationsList = document.createElement('div');
+            citationsList.className = 'citations-list';
+            
+            citations.forEach(citation => {
+                const citationItem = document.createElement('a');
+                citationItem.className = 'citation-item';
+                citationItem.href = citation.url;
+                citationItem.target = '_blank';
+                citationItem.rel = 'noopener noreferrer';
+                citationItem.title = citation.title;
+                
+                const titleElement = document.createElement('div');
+                titleElement.className = 'citation-title';
+                titleElement.textContent = citation.title;
+                
+                const urlElement = document.createElement('div');
+                urlElement.className = 'citation-url';
+                urlElement.textContent = new URL(citation.url).hostname;
+                
+                citationItem.appendChild(titleElement);
+                citationItem.appendChild(urlElement);
+                citationsList.appendChild(citationItem);
+            });
+            
+            citationsContainer.appendChild(citationsList);
+            messageElement.appendChild(citationsContainer);
+        }
         
-        // Format message with code blocks
-        const formattedMessage = this.formatMessage(message);
-        
-        // Set message HTML
-        messageElement.innerHTML = `
-            <div class="message-header">
-                <div class="message-sender">
-                    <span class="sender-icon">🤖</span>
-                    AI
-                </div>
-                <div class="message-time">${timestamp}</div>
-            </div>
-            <div class="message-content">${formattedMessage}</div>
-        `;
-        
-        // Add to chat
+        // Add the message to the chat
         this.chatMessages.appendChild(messageElement);
         
-        // Scroll to bottom
+        // Format code blocks and syntax highlighting
+        this.formatCodeBlocks(messageElement);
+        
+        // Animate the message entrance
+        this.animateMessageEntrance(messageElement, 'assistant');
+        
+        // Scroll to the bottom of the chat
         this.scrollToBottom();
-        
-        // Update suggestion visibility
-        this.checkSuggestionVisibility();
-        
-        return messageElement;
     }
 
     /**
@@ -1523,6 +1552,53 @@ class ChatUI {
         formattedText = formattedText.replace(/\n/g, '<br>');
         
         return formattedText;
+    }
+
+    /**
+     * Show a notification
+     * @param {string} message - The notification message
+     * @param {string} type - The notification type (info, success, error)
+     */
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        // Add to the DOM
+        document.body.appendChild(notification);
+        
+        // Animate in
+        if (this.hasMotion) {
+            motion.animate(notification, {
+                opacity: [0, 1],
+                y: [20, 0]
+            }, {
+                duration: 0.3,
+                easing: 'ease-out'
+            });
+        } else {
+            notification.style.opacity = 1;
+        }
+        
+        // Remove after delay
+        setTimeout(() => {
+            if (this.hasMotion) {
+                motion.animate(notification, {
+                    opacity: [1, 0],
+                    y: [0, -20]
+                }, {
+                    duration: 0.3,
+                    easing: 'ease-in',
+                    onComplete: () => {
+                        notification.remove();
+                    }
+                });
+            } else {
+                notification.style.opacity = 0;
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 4000);
     }
 }
 

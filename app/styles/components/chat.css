@@ -393,4 +393,50 @@
 .rendered-markdown ol {
   padding-left: 1.5em;
   margin-bottom: 0.5em;
+}
+
+/* Citation styles for web search results */
+.citations-container {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.75rem;
+}
+
+.citations-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.citations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.citation-item {
+    display: block;
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+    background-color: rgba(0, 0, 0, 0.05);
+    text-decoration: none;
+    transition: background-color var(--transition-speed) var(--transition-easing);
+}
+
+.citation-item:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.citation-title {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.citation-url {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 } 

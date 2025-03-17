@@ -57,10 +57,50 @@
             Select which OpenAI model to use for chat.
         </p>
         
-        <select id="model-select" class="model-select" hx-on:change="saveModelSelection()">
+        <select id="model-select" class="model-select" hx-on:change="saveModelSelection()" aria-label="Select model">
             <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
             <option value="gpt-4o">GPT-4o (More capable)</option>
+            <option value="gpt-4o-mini">GPT-4o Mini (Balance of speed and capability)</option>
         </select>
+    </div>
+    
+    <div class="settings-section">
+        <h3>API Features</h3>
+        <p class="settings-description">
+            Choose which OpenAI API features to enable.
+        </p>
+        
+        <div class="feature-toggle">
+            <label class="toggle-container">
+                <input 
+                    type="checkbox" 
+                    id="toggle-responses-api" 
+                    hx-on:change="toggleResponsesAPI(this.checked)"
+                    aria-label="Enable Responses API"
+                />
+                <span class="toggle-switch"></span>
+                <span class="toggle-label">Use Responses API</span>
+            </label>
+            <span class="feature-info">
+                Enables stateful conversations and advanced features
+            </span>
+        </div>
+        
+        <div class="feature-toggle">
+            <label class="toggle-container">
+                <input 
+                    type="checkbox" 
+                    id="toggle-web-search" 
+                    hx-on:change="toggleWebSearch(this.checked)"
+                    aria-label="Enable Web Search"
+                />
+                <span class="toggle-switch"></span>
+                <span class="toggle-label">Enable Web Search</span>
+            </label>
+            <span class="feature-info">
+                Allows the AI to search the web for real-time information
+            </span>
+        </div>
     </div>
     
     <div class="settings-section">
@@ -244,5 +284,62 @@
     .theme-button.active {
         background-color: var(--primary);
         color: white;
+    }
+    
+    .feature-toggle {
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+    }
+    
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        margin-right: var(--spacing-sm);
+        transition: background-color var(--transition-speed) var(--transition-easing);
+    }
+    
+    .toggle-switch:before {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: white;
+        top: 2px;
+        left: 2px;
+        transition: transform var(--transition-speed) var(--transition-easing);
+    }
+    
+    input[type="checkbox"] {
+        display: none;
+    }
+    
+    input[type="checkbox"]:checked + .toggle-switch {
+        background-color: var(--primary);
+    }
+    
+    input[type="checkbox"]:checked + .toggle-switch:before {
+        transform: translateX(20px);
+    }
+    
+    .toggle-label {
+        font-weight: 500;
+    }
+    
+    .feature-info {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-left: calc(40px + var(--spacing-sm));
+        margin-top: 2px;
     }
 </style> 

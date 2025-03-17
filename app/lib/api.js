@@ -18,6 +18,9 @@ class ChatAPI {
         if (Object.keys(this.conversations).length === 0 || !this.conversations[this.currentConversationId]) {
             this.createNewConversation('New Chat');
         }
+        
+        // Initialize ResponseAPI if available
+        this.responseAPI = typeof ResponseAPI !== 'undefined' ? new ResponseAPI() : null;
     }
 
     // Conversation management methods
@@ -338,6 +341,38 @@ class ChatAPI {
     }
 
     /**
+     * Check if Responses API should be used
+     * @returns {boolean} Whether to use the Responses API
+     */
+    useResponsesAPI() {
+        return localStorage.getItem('use_responses_api') === 'true' && this.responseAPI !== null;
+    }
+    
+    /**
+     * Set whether to use Responses API
+     * @param {boolean} use - Whether to use the Responses API
+     */
+    setUseResponsesAPI(use) {
+        localStorage.setItem('use_responses_api', use.toString());
+    }
+    
+    /**
+     * Check if web search should be enabled
+     * @returns {boolean} Whether web search is enabled
+     */
+    useWebSearch() {
+        return localStorage.getItem('use_web_search') === 'true';
+    }
+    
+    /**
+     * Set whether to use web search
+     * @param {boolean} use - Whether to use web search
+     */
+    setUseWebSearch(use) {
+        localStorage.setItem('use_web_search', use.toString());
+    }
+
+    /**
      * Send a message to the selected AI API
      * @param {string} message - The message to send
      * @param {Function} onChunk - Callback for each chunk of the response
@@ -367,7 +402,33 @@ class ChatAPI {
         const signal = this.controller.signal;
 
         try {
-            if (provider === 'openai') {
+            // Use ResponseAPI if enabled and available
+            if (provider === 'openai' && this.useResponsesAPI()) {
+                if (this.responseAPI) {
+                    // Create a wrapper for the onComplete callback to format the response
+                    const onResponseComplete = (formattedResponse, rawResponse) => {
+                        // Add assistant message to history
+                        this.addMessageToHistory('assistant', formattedResponse.text);
+                        
+                        // Call the original onComplete with the formatted text
+                        onComplete(formattedResponse);
+                    };
+                    
+                    // Send message using ResponseAPI
+                    await this.responseAPI.sendMessage(
+                        message,
+                        model,
+                        this.conversationHistory,
+                        this.currentConversationId,
+                        onChunk,
+                        onResponseComplete,
+                        onError,
+                        this.useWebSearch()
+                    );
+                } else {
+                    throw new Error('ResponseAPI is enabled but not available. Please refresh the page or check your configuration.');
+                }
+            } else if (provider === 'openai') {
                 await this.sendOpenAIMessage(message, onChunk, onComplete, onError, signal);
             } else {
                 await this.sendAnthropicMessage(message, onChunk, onComplete, onError, signal);

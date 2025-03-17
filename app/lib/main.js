@@ -109,18 +109,34 @@ function sendMessage(event) {
 
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize UI
-    chatUI.init();
+    // Initialize API and UI
+    chatAPI = new ChatAPI();
+    chatUI = new ChatUI();
     
-    // Initialize animations
-    animations.init();
+    // Get DOM elements
+    settingsContainer = document.getElementById('settings-container');
+    userInput = document.getElementById('user-input');
     
-    // Initialize speech-to-text
-    chatUI.initSpeechToText();
+    // Initialize responses API toggle if present
+    responsesApiToggle = document.getElementById('toggle-responses-api');
+    if (responsesApiToggle) {
+        responsesApiToggle.checked = chatAPI.useResponsesAPI();
+    }
+    
+    // Initialize web search toggle if present
+    webSearchToggle = document.getElementById('toggle-web-search');
+    if (webSearchToggle) {
+        webSearchToggle.checked = chatAPI.useWebSearch();
+        
+        // Web search should only be enabled if Responses API is enabled
+        webSearchToggle.disabled = !chatAPI.useResponsesAPI();
+    }
+    
+    // Initialize UI with conversation history
+    chatUI.initializeUI();
     
     // Set up global variables for easy access in event handlers
     window.chatMessages = document.getElementById('chat-messages');
-    window.userInput = document.getElementById('user-input');
     window.settingsContainer = document.getElementById('settings-container');
     
     // Set the current conversation title
@@ -389,4 +405,49 @@ document.addEventListener('DOMContentLoaded', () => {
         anthropicApiKeyStatus.textContent = 'API key is set';
         anthropicApiKeyStatus.className = 'api-key-status status-success';
     }
-}); 
+});
+
+/**
+ * Toggle the Responses API
+ * @param {boolean} enabled - Whether to enable the Responses API
+ */
+function toggleResponsesAPI(enabled) {
+    chatAPI.setUseResponsesAPI(enabled);
+    
+    // Update web search toggle - only enable it if Responses API is enabled
+    if (webSearchToggle) {
+        webSearchToggle.disabled = !enabled;
+        
+        // If disabling Responses API, also disable web search
+        if (!enabled && webSearchToggle.checked) {
+            webSearchToggle.checked = false;
+            toggleWebSearch(false);
+        }
+    }
+    
+    // Show notification
+    chatUI.showNotification(
+        enabled ? 
+        'Responses API enabled. Enjoy stateful conversations and advanced features!' : 
+        'Responses API disabled. Using standard Chat Completions API.'
+    );
+}
+
+/**
+ * Toggle web search functionality
+ * @param {boolean} enabled - Whether to enable web search
+ */
+function toggleWebSearch(enabled) {
+    chatAPI.setUseWebSearch(enabled);
+    
+    // Show notification
+    chatUI.showNotification(
+        enabled ? 
+        'Web search enabled. The AI can now search the web for up-to-date information.' : 
+        'Web search disabled.'
+    );
+}
+
+// Expose functions to window object
+window.toggleResponsesAPI = toggleResponsesAPI;
+window.toggleWebSearch = toggleWebSearch; 

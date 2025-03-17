@@ -219,7 +219,7 @@
                             Select which AI model to use for chat.
                         </p>
                         
-                        <select id="model-select" class="model-select">
+                        <select id="model-select" class="model-select" aria-label="Select model">
                             <optgroup label="OpenAI Models">
                                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
                                 <option value="gpt-4o">GPT-4o (More capable)</option>
@@ -362,7 +362,8 @@
         </div>
     </div>
     
-    <!-- JavaScript for API interaction and animations -->
+    <!-- Scripts -->
+    <script src="app/lib/response-api.js"></script>
     <script src="app/lib/api.js"></script>
     <script src="app/lib/ui.js"></script>
     <script src="app/lib/animations.js"></script>
