@@ -1,4 +1,9 @@
 ---
+description: System-wide architecture guidelines for Framer Motion LLM Chat App
+globs: **/*
+alwaysApply: false
+---
+---
 description: 
 globs: 
 alwaysApply: true

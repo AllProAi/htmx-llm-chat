@@ -1,0 +1,130 @@
+---
+description: API service guidelines for OpenAI integration
+globs: app/lib/api.js, app/lib/response-api.js
+alwaysApply: false
+---
+ ---
+description: "API service guidelines for OpenAI integration"
+globs: ["app/lib/api.js", "app/lib/response-api.js"]
+alwaysApply: true
+---
+
+# API Service
+
+## Responsibilities
+- Communication with external APIs (OpenAI, Anthropic)
+- API key management and validation
+- Request formation and response parsing
+- Error handling and retry logic
+- Stream processing for real-time responses
+- Feature flag management for API capabilities
+
+## Dependencies
+- Browser Fetch API
+- localStorage (for API key storage)
+- EventTarget (for emitting events)
+
+## Public Interfaces
+
+### ChatAPI Class
+```javascript
+class ChatAPI {
+  constructor();
+  
+  // API Key Management
+  hasApiKey(): boolean;
+  hasAnthropicApiKey(): boolean;
+  getApiKey(): string;
+  getAnthropicApiKey(): string;
+  saveApiKey(key: string): void;
+  saveAnthropicApiKey(key: string): void;
+  clearApiKey(): void;
+  clearAnthropicApiKey(): void;
+  
+  // Model Selection
+  getModel(): string;
+  setModel(model: string): void;
+  
+  // Message Handling
+  sendMessage(message: string, onChunk: Function, onComplete: Function, onError: Function): void;
+  cancelRequest(): void;
+  
+  // Conversation Management
+  createNewConversation(title: string): string;
+  setCurrentConversation(id: string): void;
+  getCurrentConversation(): Object;
+  updateConversationTitle(id: string, title: string): void;
+  deleteConversation(id: string): boolean;
+}
+```
+
+### ResponseAPI Class
+```javascript
+class ResponseAPI {
+  constructor();
+  
+  // API Methods
+  sendMessage(message: string, model: string, history: Array, conversationId: string, 
+              onProgress: Function, onComplete: Function, onError: Function, 
+              useWebSearch: boolean): Promise<void>;
+  cancelRequest(): void;
+  
+  // Response Management
+  getPreviousResponseId(conversationId: string): string|null;
+  saveResponseId(conversationId: string, responseId: string): void;
+  
+  // Response Processing
+  extractTextFromResponse(responseData: Object): string;
+  formatResponseWithCitations(responseData: Object): Object;
+}
+```
+
+## Implementation Guidelines
+
+### API Request Formation
+- Include appropriate headers (Content-Type, Authorization)
+- Set proper timeout limits (client-side)
+- Use AbortController for request cancellation
+- Structure request body according to API specifications
+- Validate inputs before sending
+
+### Response Handling
+- Parse JSON responses carefully with error handling
+- Extract relevant information from response structure
+- Handle streamed responses properly
+- Process citations and annotations when present
+- Provide meaningful error messages
+
+### Error Handling
+- Categorize errors (network, authentication, rate limit, etc.)
+- Implement exponential backoff for retryable errors
+- Provide clear error messages to the UI layer
+- Log detailed error information in development
+- Handle edge cases (timeout, partial responses)
+
+### Security Considerations
+- Store API keys securely (localStorage with appropriate warnings)
+- Never log full API keys
+- Mask API keys when displaying
+- Clear sensitive data when no longer needed
+- Validate API key format before usage
+
+### Migration Strategy
+- Maintain backward compatibility with Chat Completions API
+- Use feature flags to gradually enable Responses API
+- Provide facade pattern for selecting API implementation
+- Document migration path for developers
+
+## Testing Strategy
+- Unit tests for API classes
+- Mock API responses for testing
+- Test error scenarios
+- Validate retry logic
+- Test stream processing
+
+## Performance Considerations
+- Minimize request payload size
+- Implement caching where appropriate
+- Use streaming for large responses
+- Monitor token usage
+- Batch requests when possible

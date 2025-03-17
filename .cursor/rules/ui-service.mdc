@@ -1,0 +1,171 @@
+---
+description: UI service guidelines for chat interface components
+globs: "app/lib/ui.js", "app/components/**/*", "app/styles/**/*"
+alwaysApply: false
+---
+ ---
+description: "UI service guidelines for chat interface components"
+globs: ["app/lib/ui.js", "app/components/**/*", "app/styles/**/*"]
+alwaysApply: true
+---
+
+# UI Service
+
+## Responsibilities
+- Rendering chat interface components
+- Managing user interactions
+- Handling DOM updates
+- Processing markdown and code formatting
+- Implementing accessibility features
+- Responsive design adaptations
+- Theme management (light/dark)
+
+## Dependencies
+- HTMX for dynamic content
+- Marked.js for markdown parsing
+- CSS custom properties for theming
+- Animation service for motion effects
+
+## Public Interfaces
+
+### ChatUI Class
+```javascript
+class ChatUI {
+  constructor();
+  
+  // Message Management
+  addUserMessage(text: string): HTMLElement;
+  addAIMessage(text: string): HTMLElement;
+  createMessageElement(role: string, content: string): HTMLElement;
+  formatCodeBlocks(text: string): string;
+  
+  // UI State Management
+  setLoadingState(isLoading: boolean): void;
+  showTypingIndicator(): HTMLElement;
+  removeTypingIndicator(): void;
+  showError(message: string): void;
+  clearInput(): void;
+  
+  // Theme Management
+  setTheme(theme: 'light'|'dark'|'system'): void;
+  getTheme(): string;
+  
+  // Layout Management
+  scrollToBottom(smooth: boolean = true): void;
+  toggleSidebar(show: boolean): void;
+  toggleSettingsPanel(show: boolean): void;
+  
+  // Conversation Management
+  displayConversations(conversations: Object): void;
+  highlightCurrentConversation(id: string): void;
+  updateConversationTitle(id: string, title: string): void;
+}
+```
+
+## Component Specifications
+
+### Chat Container
+- Responsive layout with max-width for desktop
+- Scrollable message history
+- Fixed input area at bottom
+- Smooth scroll behavior to newest messages
+
+### Message Component
+- Different styling for user vs. AI messages
+- Support for text formatting (markdown)
+- Code block syntax highlighting
+- Timestamp display
+- Citation linking (for web search results)
+
+### Input Component
+- Textarea with auto-expand functionality
+- Send button with animation on hover/click
+- Character counter
+- Markdown toolbar
+- Disable during AI response generation
+
+### Settings Panel
+- Collapsible/expandable interface
+- API key input with masking option
+- Save to localStorage functionality
+- Model selection dropdown
+- Theme selection options
+
+### Sidebar
+- Conversation list with scrolling
+- Create new conversation button
+- Delete conversation option
+- Edit conversation title capability
+- Mobile-friendly toggle
+
+## Implementation Guidelines
+
+### HTML Structure
+- Semantic HTML elements for accessibility
+- ARIA roles, labels, and attributes
+- Keyboard navigation support
+- Proper heading hierarchy
+- Form elements with labels
+
+```html
+<!-- Example Message Component Structure -->
+<div class="message ai-message" role="listitem">
+  <div class="message-avatar">AI</div>
+  <div class="message-content">
+    <!-- Markdown rendered content -->
+  </div>
+  <div class="message-meta">
+    <span class="message-timestamp">2:34 PM</span>
+  </div>
+</div>
+```
+
+### CSS Guidelines
+- Mobile-first responsive design
+- CSS custom properties for theming
+- BEM naming convention
+- Flexbox/Grid for layouts
+- Smooth transitions for state changes
+- Focus styles for keyboard navigation
+
+```css
+/* Example CSS custom properties */
+:root {
+  --color-primary: #4F46E5;
+  --color-background: #FFFFFF;
+  --color-text: #1F2937;
+  --spacing-md: 1rem;
+  --border-radius: 0.5rem;
+}
+
+[data-theme="dark"] {
+  --color-background: #111827;
+  --color-text: #F9FAFB;
+}
+```
+
+### Accessibility Requirements
+- Color contrast (WCAG AA compliant)
+- Keyboard navigation
+- Screen reader support
+- Focus management
+- Reduced motion options
+- Proper ARIA attributes
+
+### Responsive Design Breakpoints
+- Mobile: < 640px
+- Tablet: 640px - 1024px
+- Desktop: > 1024px
+
+## Error States
+- Empty state (no messages)
+- Error state (API failures)
+- Loading state (waiting for response)
+- Offline state (no connectivity)
+
+## Testing Strategy
+- Test across supported browsers
+- Mobile device testing
+- Accessibility testing (screen readers)
+- Responsive design testing
+- Performance testing for animations

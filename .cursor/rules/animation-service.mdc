@@ -1,0 +1,159 @@
+---
+description: Animation service guidelines using Framer Motion
+globs: app/lib/animations.js
+alwaysApply: false
+---
+ ---
+description: "Animation service guidelines using Framer Motion"
+globs: ["app/lib/animations.js"]
+alwaysApply: true
+---
+
+# Animation Service
+
+## Responsibilities
+- Implementing smooth UI animations using Framer Motion
+- Managing animation timings and easing functions
+- Providing fallbacks for when Motion library is unavailable
+- Respecting user's reduced motion preferences
+- Ensuring animations maintain 60fps performance
+- Creating consistent motion patterns across the application
+
+## Dependencies
+- Framer Motion library (via CDN)
+- CSS fallback animations
+- `prefers-reduced-motion` media query
+- DOM mutation observers for reactive animations
+
+## Public Interfaces
+
+### Animations Class
+```javascript
+class Animations {
+  constructor();
+  
+  // Core Methods
+  init(): void;
+  checkReducedMotion(): boolean;
+  applyInitialAnimations(): void;
+  
+  // Component Animations
+  setupSettingsPanelAnimations(): void;
+  animateSettingsPanel(element: HTMLElement, isOpen: boolean): void;
+  animateMessageEntrance(element: HTMLElement, role: string): void;
+  animateTypingIndicator(element: HTMLElement): void;
+  animateButton(element: HTMLElement, event: string): void;
+  
+  // Helper Methods
+  shouldAnimate(): boolean;
+  applyFallbackAnimation(element: HTMLElement, animationName: string): void;
+}
+```
+
+## Animation Specifications
+
+### Message Entry Animations
+- **User Messages**: Slide in from right with slight bounce
+- **AI Messages**: Fade in with slight rise
+- **Duration**: 300-500ms
+- **Easing**: Spring physics (tension: 200, friction: 20)
+- **Properties**: Opacity, TranslateY, TranslateX
+
+```javascript
+motion.animate(messageElement, {
+  opacity: [0, 1],
+  y: [10, 0],
+  x: role === 'user' ? [20, 0] : [0, 0]
+}, {
+  duration: 0.4,
+  easing: [0.2, 0.0, 0.0, 1.0]
+});
+```
+
+### Typing Indicator Animation
+- Three dots with staggered pulsing
+- Continuous animation until response received
+- Subtle opacity and scale changes
+- Should feel organic and not mechanical
+
+```javascript
+const dots = element.querySelectorAll('.typing-dot');
+dots.forEach((dot, i) => {
+  motion.animate(dot, {
+    scale: [1, 1.2, 1],
+    opacity: [0.5, 1, 0.5]
+  }, {
+    duration: 1,
+    repeat: Infinity,
+    delay: i * 0.2
+  });
+});
+```
+
+### Button Animations
+- **Hover**: Scale up slightly (1.05)
+- **Active/Click**: Scale down slightly (0.95)
+- **Focus**: Glow effect with primary color
+- **Duration**: 150ms
+- **Easing**: Ease-out
+
+### Panel Transitions
+- **Settings Open**: Slide down from top
+- **Settings Close**: Slide up and out of view
+- **Duration**: 250ms
+- **Easing**: [0.2, 0.0, 0.0, 1.0]
+
+### Sidebar Animations
+- Slide in/out from left side
+- Maintain content visibility during animation
+- Adjust main content area width simultaneously
+
+## Implementation Guidelines
+
+### Performance Optimization
+- Use hardware-accelerated properties (transform, opacity)
+- Avoid animating layout properties (width, height, top, left)
+- Debounce window resize handlers
+- Use `will-change` property sparingly
+- Batch DOM reads and writes
+
+### Reduced Motion Support
+- Check `prefers-reduced-motion` media query
+- Provide alternate subtle animations or disable entirely
+- Never disable functional animations (loading indicators)
+- Allow users to override system preference
+
+```javascript
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Apply simplified animations or none at all
+```
+
+### CSS Fallbacks
+- Implement CSS keyframe animations as fallbacks
+- Use CSS transitions for simple state changes
+- Ensure graceful degradation when JS fails
+
+```css
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-enter {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+```
+
+### Animation Principles
+- **Purpose**: Animations should serve a functional purpose
+- **Natural**: Mimic real-world physics
+- **Consistent**: Similar elements should animate similarly
+- **Subtle**: Avoid overwhelming or distracting animations
+- **Responsive**: Adapt animations to device performance
+
+## Testing Strategy
+- Visual inspection across browsers
+- Performance testing (maintain 60fps)
+- Test with reduced motion enabled
+- Test with Motion library unavailable
+- Test on low-power devices

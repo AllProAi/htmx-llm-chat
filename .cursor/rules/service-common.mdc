@@ -1,0 +1,99 @@
+---
+description: Shared standards and guidelines across all services
+globs: "app/**/*"
+alwaysApply: false
+---
+ ---
+description: "Shared standards and guidelines across all services"
+globs: ["app/**/*"]
+alwaysApply: true
+---
+
+# Service Common Standards
+
+## Coding Standards
+- Use vanilla JavaScript (ES6+) without external frameworks
+- Follow functional programming patterns where possible
+- Minimize DOM manipulation and leverage HTMX for updates
+- Document all functions and complex logic with comments
+- Use consistent naming conventions (camelCase for variables/functions)
+- Favor composition over inheritance
+- Implement error handling for all external calls
+
+## JavaScript Guidelines
+- Use `const` by default, `let` when necessary, avoid `var`
+- Use arrow functions for callbacks and lexical `this`
+- Implement proper error handling with try/catch blocks
+- Use modern ES6+ features (destructuring, template literals, etc.)
+- Avoid global variables and namespace pollution
+- Add JSDoc comments for all public functions
+
+```javascript
+/**
+ * Description of function purpose
+ * @param {Type} paramName - Description of parameter
+ * @returns {Type} Description of return value
+ */
+function exampleFunction(paramName) {
+  // Implementation
+}
+```
+
+## State Management
+- Use localStorage for persistent data
+- Keep sensitive data in memory only
+- Implement clear state initialization and cleanup
+- Use events for cross-component communication
+- Document data structures with comments
+- Provide migration paths for state format changes
+
+## File Organization
+- Organize files by feature first, then by type
+- Keep modules focused on a single responsibility
+- Limit file size to maintain readability (max ~300 lines)
+- Use explicit imports/exports
+- Avoid circular dependencies
+
+## HTML Guidelines
+- Semantic HTML elements for better accessibility
+- Descriptive, meaningful IDs and classes
+- Include ARIA attributes for accessibility
+- Implement keyboard navigation
+- Progressive enhancement for core functionality
+
+## CSS Guidelines
+- Use CSS custom properties for theming/configuration
+- Follow BEM (Block Element Modifier) naming convention
+- Mobile-first responsive design
+- Use CSS Grid and Flexbox for layouts
+- Keep selectors simple and specific
+- Avoid !important declarations
+- Organize properties consistently (layout, typography, visual, animation)
+
+## Error Handling
+- Graceful degradation when features fail
+- User-friendly error messages
+- Detailed error logging in console (in development)
+- Recovery mechanisms where possible
+- Fallbacks for unsupported browsers/features
+
+## Performance
+- Lazy load non-critical resources
+- Optimize animations for 60fps
+- Debounce/throttle event handlers
+- Minimize layout thrashing (batch DOM reads/writes)
+- Use efficient selectors and query strategies
+- Consider performance implications of localStorage usage
+
+## Security
+- Sanitize user input before processing
+- Validate data from external sources
+- XSS prevention in rendered content
+- Secure handling of API keys
+- Follow content security policy best practices
+
+## Documentation
+- Document all public APIs and interfaces
+- Include usage examples
+- Maintain change logs
+- Document implementation decisions
